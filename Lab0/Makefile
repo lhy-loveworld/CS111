@@ -1,7 +1,8 @@
 CC = gcc
 CFLAGS  = -g -Wall
-sources = Makefile lab0.c README backtrace.png breakpoint.png
+sources = Makefile lab0.c README backtrace.png breakpoint.png check.sh input_file.txt output_file.txt stdin.txt stdout.txt
 TARGET = lab0
+UID = 304759850
 
 all: $(TARGET)
 
@@ -12,7 +13,7 @@ clean:
 	 $(RM) $(TARGET)
 	 
 dist:
-	 @tar -czf lab0-304759850.tar.gz $(sources)
+	 tar -czf $(TARGET)-$(UID).tar.gz $(sources)
 	
-check:
-	 @
+check:   clean all
+	 @bash ./check.sh

@@ -1,3 +1,20 @@
 NAME: Hongyang Li
-EMAIL: hyli@g.ucla.edu
-ID: 304759850
+
+Files in my submission:
+	lab0.c, Makefile, backtrace.png, breakpoint.png, README		files required by the spec
+	check.sh							bash script used for the smoke-test
+	input_file.txt, output_file.txt, stdin.txt, stdout.txt		txt files used for the smoke-test
+
+Smoke Test Cases:
+	Test 1 is to call the excutable without any arguments.
+	Test 2 is to set an input path.
+	Test 3 is to set an output path.
+	Test 4 is to set both input and output paths.
+	Test 5 is to check the error using an unrecognizable argument
+	Test 6 is to check the error openning an input file.
+	Test 7 is to check the error creating an output file.
+	Test 8 is to check catching segmentation fault.
+	
+Cited Sources:
+	Manual pages and TA's discussion slides
+	

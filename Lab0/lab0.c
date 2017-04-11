@@ -1,3 +1,6 @@
+//Arthor: Hongyang Li
+//This is the source module for lab0 of CS111.
+
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -85,11 +88,11 @@ int main (int argc, char *argv[]){
     }
   }
   
-  char buf[10];
-  int read_bytes = read(0, buf, 10);
+  char buf[1024];
+  int read_bytes = read(0, buf, 1024);
   while (read_bytes != 0) {
     write(1, buf, read_bytes);
-    read_bytes = read(0, buf, 10);
+    read_bytes = read(0, buf, 1024);
   }
   exit(0);
   return 0;
