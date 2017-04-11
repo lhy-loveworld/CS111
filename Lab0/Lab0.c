@@ -7,6 +7,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <string.h>
 
 void segfault();
 
@@ -67,7 +68,7 @@ int main (int argc, char *argv[]){
       close(fd0);
     }
     else {
-      fprintf(stderr, "Error opening input file: %s", strerror(errno));
+      fprintf(stderr, "Error opening input file: %s\n", strerror(errno));
       exit(2);
     }
   }
@@ -79,7 +80,7 @@ int main (int argc, char *argv[]){
       close(fd1);
     }
     else {
-      fprintf(stderr, "Error opening output file: %s", strerror(errno));
+      fprintf(stderr, "Error opening output file: %s\n", strerror(errno));
       exit(3);
     }
   }
@@ -100,6 +101,6 @@ void segfault() {
 }
 
 void sighandler(int signo) {
-  fprintf(stderr, "Error caught: %s", signo);
+  fprintf(stderr, "Segmentation fault. Signal number: %d\n", signo);
   exit(4);
 }
