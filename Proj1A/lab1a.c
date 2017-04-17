@@ -10,10 +10,41 @@
 #include <errno.h>
 #include <string.h>
 
-//void attr_get(int fd, struct termios attr);
-void set_attr(int, struct termios *);
-void read_buf(int, char *, struct termios *);
-void write_buf(int, char *, int, struct termios *);
+
+void read_buf(int, char *);
+void write_buf(int, char *, int);
+
+struct termios saved_attributes;
+
+void reset_input_mode (void) {
+  tcsetattr (STDIN_FILENO, TCSANOW, &saved_attributes);
+}
+
+void set_input_mode (void) {
+  struct termios tattr;
+  char *name;
+
+  /* Make sure stdin is a terminal. */
+  if (!isatty (STDIN_FILENO))
+    {
+      fprintf (stderr, "Not a terminal.\n");
+      exit (1);
+    }
+
+  /* Save the terminal attributes so we can restore them later. */
+  tcgetattr (STDIN_FILENO, &saved_attributes);
+  atexit (reset_input_mode);
+
+  /* Set the funny terminal modes. */
+  tcgetattr (STDIN_FILENO, &tattr);
+  tattr.c_lflag &= ~(ICANON|ECHO); /* Clear ICANON and ECHO. */
+  tattr.c_cc[VMIN] = 1;
+  tattr.c_cc[VTIME] = 0;
+  tattr.c_lflag = ISTRIP;
+  tattr.c_oflag = 0;
+  tattr.c_lflag = 0;
+  tcsetattr (STDIN_FILENO, TCSAFLUSH, &tattr);
+}
 
 int main(int argc, char *argv[]) {
   static struct option args[] = {
@@ -22,7 +53,7 @@ int main(int argc, char *argv[]) {
   };
   int shell_flag = 0;
   int i;
-  while ((i = getopt_long(argc, argv, "s", args, NULL)) != -1) {
+  while ((i = getopt_long(argc, argv, "", args, NULL)) != -1) {
     if (i == 's') {
       shell_flag = 1;
     } else {
@@ -31,17 +62,7 @@ int main(int argc, char *argv[]) {
       exit(1);
     }
   }
-  struct termios old_attributes;
-  struct termios new_attributes;
-  if (tcgetattr(0, &old_attributes) != 0) {
-    perror("Can not get attribute");
-    exit(1);
-  }
-  new_attributes = old_attributes;
-  new_attributes.c_iflag = ISTRIP;
-  new_attributes.c_oflag = 0;
-  new_attributes.c_lflag = 0;
-  set_attr(0, &new_attributes);
+  
   if (!shell_flag) {
     char buf[1];
     read_buf(0, buf, &old_attributes);
@@ -85,30 +106,20 @@ int main(int argc, char *argv[]) {
     }
   }
     
-  set_attr(0, &old_attributes);
   exit(0);
   return 0;
 }
 
-void set_attr(int fd, struct termios *attr_p) {
-  if (tcsetattr(fd, TCSANOW, attr_p) != 0) {
-    perror("Can not set attributes!");
-    exit(1);
-  }
-}
-
-void read_buf(int fd, char *buf, struct termios *attr_p) {
+void read_buf(int fd, char *buf) {
   if (read(fd, buf, 1) == -1) {
     perror("Can not read from stdin");
-    set_attr(fd, attr_p);
     exit(1);
   }
 }
 
-void write_buf(int fd, char *buf, int i, struct termios *attr_p) {
+void write_buf(int fd, char *buf, int i) {
   if (write(fd, buf, i) == -1) {
     perror("Can not write to stdout");
-    set_attr(0, attr_p);
     exit(1);
   }
 }
