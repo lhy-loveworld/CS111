@@ -70,7 +70,11 @@ int main(int argc, char *argv[]) {
     } else {
       printf("Please enter correct commands as shown below!\n");
       printf("  --shell ... pass input/output between the terminal and a shell\n");
+<<<<<<< HEAD
       fprintf(stderr, "unrecognized argument\n");
+=======
+      fprintf(stderr, "unrecognized argument: %s\n", strerror(errno));
+>>>>>>> 61f700ebd501de7df75b19cf9f1a0a60f94b0ce3
       exit(1);
     }
   }
