@@ -13,14 +13,19 @@
 #include <poll.h>
 #include <signal.h>
 
-/*
-void read_buf(int, char *);
-void write_buf(int, char *, int);
-*/
-struct termios saved_attributes;
 
-void reset_input_mode (void) {
+struct termios saved_attributes;
+int rc = 0;
+
+void exit_handler (void) {
   tcsetattr (STDIN_FILENO, TCSANOW, &saved_attributes);
+  if (rc > 0) {
+    int status;
+    if (waitpid(rc, &status, 0) == -1) {
+      fprintf(stderr, "waitpid() failed: %s\n", strerror(errno));
+    }
+    printf("SHELL EXIT SIGNAL=%d STATUS=%d\n", WTERMSIG(status), WEXITSTATUS(status));
+  }
 }
 
 void set_input_mode (void) {
@@ -35,7 +40,7 @@ void set_input_mode (void) {
 
   /* Save the terminal attributes so we can restore them later. */
   tcgetattr (STDIN_FILENO, &saved_attributes);
-  atexit (reset_input_mode);
+  atexit (exit_handler);
 
   /* Set the funny terminal modes. */
   tcgetattr (STDIN_FILENO, &tattr);
@@ -46,6 +51,10 @@ void set_input_mode (void) {
   tattr.c_oflag = 0;
   tattr.c_lflag = 0;
   tcsetattr (STDIN_FILENO, TCSANOW, &tattr);
+}
+
+void pipe_handler(int signo) {
+  exit(0);
 }
 
 int main(int argc, char *argv[]) {
@@ -61,6 +70,7 @@ int main(int argc, char *argv[]) {
     } else {
       printf("Please enter correct commands as shown below!\n");
       printf("  --shell ... pass input/output between the terminal and a shell\n");
+      fprintf(stderr, "unrecognized argument\n");
       exit(1);
     }
   }
@@ -74,7 +84,7 @@ int main(int argc, char *argv[]) {
     while (1) {
       read_count = read(0, buf, 1024);
       if (read_count == -1) {
-        perror("read() failed\n");
+        fprintf(stderr, "read() failed: %s\n", strerror(errno));
         exit(1);
       } else {
         for (i = 0; i < read_count; ++i) {
@@ -82,14 +92,14 @@ int main(int argc, char *argv[]) {
             case 0x0D:
             case 0x0A:
               if (write(1, "\r\n", 2) == -1) {
-              	perror("write() failed\n");
+              	fprintf(stderr, "write() failed: %s\n", strerror(errno));
               }
               break;
             case 0x04:
               exit(0);
             default:
               if (write(1, buf + i, 1) == -1) {
-              	perror("write() failed\n");
+              	fprintf(stderr, "write() failed: %s\n", strerror(errno));
               }
           }
         }
@@ -99,16 +109,16 @@ int main(int argc, char *argv[]) {
   } else {
     int pfd1[2], pfd2[2];
     if (pipe(pfd1) < 0) {
-      perror("pipe() failed\n");
+      fprintf(stderr, "pipe() failed: %s\n", strerror(errno));
       exit(1);
     }
     if (pipe(pfd2) < 0) {
-      perror("pipe() failed\n");
+      fprintf(stderr, "pipe() failed: %s\n", strerror(errno));
       exit(1);
     }
-    int rc = fork();
+    rc = fork();
     if (rc < 0) { // fork failed; exit
-      perror("fork() failed\n");
+      fprintf(stderr, "fork() failed: %s\n", strerror(errno));
       exit(1);
     } else {
       if (rc == 0) { // child (new process)
@@ -123,10 +133,11 @@ int main(int argc, char *argv[]) {
 	      child_args[0] = strdup("/bin/bash");
 	      child_args[1] = NULL;
 	      if (execvp(child_args[0], child_args) == -1) {
-          perror("execvp() failed!\n");
+          fprintf(stderr, "execvp() failed: %s\n", strerror(errno));
           exit(1);
         }
       } else { // parent goes down this path (main)
+        signal(SIGPIPE, pipe_handler);
         close(pfd1[0]);
         close(pfd2[1]);
         char buf[1024];
@@ -139,11 +150,10 @@ int main(int argc, char *argv[]) {
         fds[1].fd = pfd2[0];
         fds[0].events = POLLIN | POLLHUP | POLLERR;
         fds[1].events = POLLIN | POLLHUP | POLLERR;
-        int status;
         while (1) {
           ret_poll = poll(fds, 2, 0);
           if (ret_poll == -1) {
-            perror("poll() failed\n");
+            fprintf(stderr, "poll() failed: %s\n", strerror(errno));
             exit(1);
           } else {
             if (ret_poll > 0) {
@@ -151,7 +161,7 @@ int main(int argc, char *argv[]) {
                 if (fds[i].revents & POLLIN) {
                   read_count = read(fds[i].fd, buf, 1024);
                   if (read_count == -1) {
-                    perror("read() failed\n");
+                    fprintf(stderr, "read() failed: %s\n", strerror(errno));
                     exit(1);
                   } else {
                     for (j = 0; j < read_count; ++j) {
@@ -168,17 +178,13 @@ int main(int argc, char *argv[]) {
                           break;
                         case 0x04:
                         	if (i == 0) {
-                        		close(pfd1[1]);
+                            close(pfd1[1]);
                         	}
                         	break;
                         case 0x03:
                           kill(rc, SIGINT);
-                          if (waitpid(rc, &status, 0) == -1) {
-												   	perror("waitpid() failed\n");
-												   	exit(1);
-												  }
-												  printf("SHELL EXIT SIGNAL=%d STATUS=%d", WEXITSTATUS(status), WTERMSIG(status));//status & 0x7F, (status & 0xFF) >> 8);
-                          exit(0);
+                          //status & 0x7F, (status & 0xFF) >> 8);
+                          //exit(0);
                         default:
                           write(1, buf + j, 1);
                           if (i == 0) {
@@ -191,29 +197,18 @@ int main(int argc, char *argv[]) {
                 if (fds[i].revents & POLLHUP) {
                 	if (i == 1) {
                 		close(pfd2[0]);
-                		if (waitpid(rc, &status, 0) == -1) {
-									   	perror("waitpid() failed\n");
-									   	exit(1);
-									  }
-									  printf("SHELL EXIT SIGNAL=%d STATUS=%d\n", WEXITSTATUS(status), WTERMSIG(status));//status & 0x7F, (status & 0xFF) >> 8);
+                		//status & 0x7F, (status & 0xFF) >> 8);
                 		exit(0);
                 	}
                 }
                 if (fds[i].revents & POLLERR) {
-                	if (waitpid(rc, &status, 0) == -1) {
-									 	perror("waitpid() failed\n");
-									 	exit(1);
-									}
-									printf("SHELL EXIT SIGNAL=%d STATUS=%d\n", WEXITSTATUS(status), WTERMSIG(status));//status & 0x7F, (status & 0xFF) >> 8);
-                	exit(1);
+                	//status & 0x7F, (status & 0xFF) >> 8);
+                	exit(0);
                 }
               }
             }
           }
         }
-        
-	      // printf("%d %d\n\r", pfd1[0], pfd1[1]);
-	      // printf("%d %d\n\r", pfd2[0], pfd2[1]);
       }
     }
   }
