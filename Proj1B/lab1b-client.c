@@ -61,6 +61,7 @@ int main(int argc, char *argv[])
   int arg_get;
   int i;
   char *log_path = NULL;
+  const char host[] = "localhost";
   
   while ((i = getopt_long(argc, argv, "", args, NULL)) != -1) {
     switch(i) {
@@ -89,7 +90,7 @@ int main(int argc, char *argv[])
     fprintf(stderr, "ERROR opening socket: %s\n", strerror(errno));
     exit(1);
   }
-  server = gethostbyname(argv[1]);
+  server = gethostbyname(host);
   if (server == NULL) {
     fprintf(stderr,"ERROR, no such host\n");
     exit(1);
