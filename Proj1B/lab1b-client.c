@@ -9,6 +9,7 @@
 #include <getopt.h>
 #include <errno.h>
 #include <poll.h>
+#include <strings.h>
 
 struct termios saved_attributes;
 
