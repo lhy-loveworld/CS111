@@ -34,28 +34,27 @@ int main (int argc, char *argv[]){
     switch(i) {
       case 'i': {
         in_path = optarg;
-	break;
+      	break;
       }
       case 'o': {
         out_path = optarg;
-	break;
+      	break;
       }
       case 's': {
-	segfault_flag = 1;
-	break;
+      	segfault_flag = 1;
+      	break;
       }
       case 'c': {
         catch_flag = 1;
-	break;
+	     break;
       }
       default: {
         printf("Please enter correct commands as shown below!\n");
-	printf("  --input=filename ... use the specified file as standard input\n");
-	printf("  --output=filename ... create the specified file and use it as standard output\n");
-	printf("  --segfault ... force a segmentation fault\n");
-	printf("  --catch ... catch the segmentation fault\n");
-	exit(1);
-	break;
+      	printf("  --input=filename ... use the specified file as standard input\n");
+      	printf("  --output=filename ... create the specified file and use it as standard output\n");
+      	printf("  --segfault ... force a segmentation fault\n");
+      	printf("  --catch ... catch the segmentation fault\n");
+      	exit(1);
       }
     }
   }
