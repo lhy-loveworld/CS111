@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
     server->h_length);
   serv_addr.sin_port = htons(portno);
   if (connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0) {
-    fprintf(stderr, "ERROR connecting%s\n", strerror(errno));
+    fprintf(stderr, "ERROR connecting: %s\n", strerror(errno));
     exit(1);
   }
 
