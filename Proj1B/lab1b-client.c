@@ -99,6 +99,7 @@ int main(int argc, char *argv[])
         log_fd = creat(optarg, 0666);
         if (log_fd < 0) {
           fprintf(stderr, "creat() error: %s\n", strerror(errno));
+          exit(1);
         }
 				break;
       }
