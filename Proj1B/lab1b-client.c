@@ -61,8 +61,9 @@ void sendtoserver(char *buffer) {
     mcrypt_generic(td1, buffer, 256);
   }
   if (log_flag) {
-    dprintf(log_fd, "SENT %d bytes: ");
+    dprintf(log_fd, "SENT %d bytes: ", len);
     write(log_fd, buffer, len);
+    write(log_fd, "\n", 1);
   }
   write(sockfd, buffer, len);
   bzero(buffer, 256);
