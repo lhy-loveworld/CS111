@@ -204,8 +204,8 @@ int main(int argc, char *argv[])
                 for (j = 0; j < read_count; ++j) {
                   if ((buffer[j] == 0x0D) || (buffer[j] == 0x0A)) {
                     strcat(send_buffer, "\n");
-                    sendtoserver(send_buffer);
                     write(1, "\r\n", 2);
+                    sendtoserver(send_buffer);
                   } else {
                     write(1, buffer + j, 1);
                     strncat(send_buffer, buffer + j, 1);
