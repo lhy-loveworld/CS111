@@ -8,7 +8,7 @@ UID = 304759850
 
 all: $(TARGET)
 
-$(TARGET): $(TARGET)-$(TARGET1).c $(TARGET)-$(TARGET2).c
+$(TARGET): $(TARGET1).c $(TARGET2).c
 	 $(CC) -o $(TARGET1) $(TARGET1).c $(CFLAGS)
 	 $(CC) -o $(TARGET2) $(TARGET2).c $(CFLAGS)
 
