@@ -56,15 +56,15 @@ void exithandler(void) {
 }
 
 void sendtoserver(char *buffer) {
+	int len = strlen(buffer);
   if (enc_flag) {
     mcrypt_generic(td1, buffer, 256);
   }
   if (log_flag) {
-    write(log_fd, "SENT 256 bytes: ", 16);
-    write(log_fd, buffer, 256);
-    write(log_fd, "\n", 1);
+    dprintf(log_fd, "SENT %d bytes: ");
+    write(log_fd, buffer, len);
   }
-  write(sockfd, buffer, 256);
+  write(sockfd, buffer, len);
   bzero(buffer, 256);
 }
 
@@ -154,14 +154,15 @@ int main(int argc, char *argv[])
 
 
   char *IV = "ABCDEFGHIJKLMNOP";
-  char key[16];
-  int keysize = 16;
+  char key[20];
+  int keysize = 0;
   bzero(key, keysize);
 
   if (enc_flag) {
     td1 = mcrypt_module_open("twofish", NULL, "cfb", NULL);
     td2 = mcrypt_module_open("twofish", NULL, "cfb", NULL);
     read(key_fd, key, 16);
+    keysize = strlen(key);
     mcrypt_generic_init(td1, key, keysize, IV);
     mcrypt_generic_init(td2, key, keysize, IV);
   }
