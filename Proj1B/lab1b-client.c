@@ -47,7 +47,7 @@ void set_input_mode (void) {
   tcsetattr (STDIN_FILENO, TCSANOW, &tattr);
 }
 
-1void exithandler(void) {
+void exithandler(void) {
   tcsetattr (STDIN_FILENO, TCSANOW, &saved_attributes);
   mcrypt_generic_deinit(td1);
   mcrypt_module_close(td1);
