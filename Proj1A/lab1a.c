@@ -24,7 +24,7 @@ void exit_handler (void) {
     if (waitpid(rc, &status, 0) == -1) {
       fprintf(stderr, "waitpid() failed: %s\n", strerror(errno));
     }
-    printf("SHELL EXIT SIGNAL=%d STATUS=%d\n", WTERMSIG(status), WEXITSTATUS(status));
+    fprintf(stderr, "SHELL EXIT SIGNAL=%d STATUS=%d\n", WTERMSIG(status), WEXITSTATUS(status));
   }
 }
 

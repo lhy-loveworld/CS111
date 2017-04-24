@@ -1,0 +1,31 @@
+a.txt
+client
+client.c
+foo.txt
+lab1b-client.c
+lab1b-server.c
+Project 1B.pdf
+server
+server.c
+a.txt
+client
+client.c
+foo.txt
+lab1b-client.c
+lab1b-server.c
+Project 1B.pdf
+server
+server.c
+/bin/bash: > bar.txt: No such file or directory
+lsDesktop
+Documents
+Downloads
+examples.desktop
+LinktoOneDrive
+Music
+myenv
+Pictures
+Public
+R
+Templates
+Videos
