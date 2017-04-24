@@ -187,10 +187,11 @@ int main(int argc, char *argv[])
                     kill(rc, SIGTERM);
                   } else {
                     if (i == 1) {
+                      int len = strlen(buffer);
                       if (enc_flag) {
                         mcrypt_generic(td1, buffer, 256);
                       }
-                      write(newsockfd, buffer, 256);
+                      write(newsockfd, buffer, len);
                     } else {
                       if (enc_flag) {
                         mdecrypt_generic(td2, buffer, 256);
