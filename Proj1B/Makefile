@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS  = -g -Wall
+CFLAGS  = -g -Wall -lmcrypt
 sources = Makefile $(TARGET1).c $(TARGET2).c README my.key
 TARGET = lab1b
 TARGET1 = $(TARGET)-server
@@ -9,14 +9,14 @@ UID = 304759850
 all: $(TARGET)
 
 $(TARGET): $(TARGET1).c $(TARGET2).c
-	 $(CC) $(CFLAGS) -o $(TARGET1) $(TARGET1).c
-	 $(CC) $(CFLAGS) -o $(TARGET2) $(TARGET2).c
+	 $(CC) -o $(TARGET1) $(TARGET1).c $(CFLAGS)
+	 $(CC) -o $(TARGET2) $(TARGET2).c $(CFLAGS)
 
 $(TARGET1): $(TARGET1).c
-	 $(CC) $(CFLAGS) -o $(TARGET1) $(TARGET1).c
+	 $(CC) -o $(TARGET1) $(TARGET1).c $(CFLAGS)
 
 $(TARGET2): $(TARGET2).c
-	 $(CC) $(CFLAGS) -o $(TARGET2) $(TARGET2).c
+	 $(CC) -o $(TARGET2) $(TARGET2).c $(CFLAGS)
 
 clean: 
 	 $(RM) $(TARGET1)
