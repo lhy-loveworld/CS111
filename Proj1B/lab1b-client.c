@@ -47,7 +47,7 @@ void set_input_mode (void) {
   tcsetattr (STDIN_FILENO, TCSANOW, &tattr);
 }
 
-void exithandler(void) {
+1void exithandler(void) {
   tcsetattr (STDIN_FILENO, TCSANOW, &saved_attributes);
   mcrypt_generic_deinit(td1);
   mcrypt_module_close(td1);
@@ -58,7 +58,8 @@ void exithandler(void) {
 void sendtoserver(char *buffer) {
 	int len = strlen(buffer);
   if (enc_flag) {
-    mcrypt_generic(td1, buffer, 256);
+    //len++;
+    mcrypt_generic(td1, buffer, len);
   }
   if (log_flag) {
     dprintf(log_fd, "SENT %d bytes: ", len);
@@ -155,14 +156,14 @@ int main(int argc, char *argv[])
 
 
   char *IV = "ABCDEFGHIJKLMNOP";
-  char key[20];
+  char key[40];
   int keysize = 0;
-  bzero(key, keysize);
+  bzero(key, 40);
 
   if (enc_flag) {
     td1 = mcrypt_module_open("twofish", NULL, "cfb", NULL);
     td2 = mcrypt_module_open("twofish", NULL, "cfb", NULL);
-    read(key_fd, key, 16);
+    read(key_fd, key, 32);
     keysize = strlen(key);
     mcrypt_generic_init(td1, key, keysize, IV);
     mcrypt_generic_init(td2, key, keysize, IV);
@@ -223,7 +224,7 @@ int main(int argc, char *argv[])
                   dprintf(log_fd, "RECEIVED %d bytes: %s\n", read_count, buffer);
                 }
                 if (enc_flag) {
-                  mdecrypt_generic(td2, buffer, 256);
+                  mdecrypt_generic(td2, buffer, read_count);
                 }
                 for (j = 0; j < read_count; ++j) {
                   if (buffer[j] == 0x0A) {

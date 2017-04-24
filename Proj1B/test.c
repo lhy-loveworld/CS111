@@ -36,10 +36,10 @@ int main(int argc, char *argv[]) {
 	printf("blocksize: %d, keysize: %d, ivsize: %d\n", mcrypt_enc_get_block_size(td1), mcrypt_enc_get_key_size(td1), mcrypt_enc_get_iv_size(td1));
 	mcrypt_generic_init(td1, key, keysize, IV);
 	mcrypt_generic_init(td2, key, keysize, IV);
-	mcrypt_generic(td1,buffer, 256);
+	mcrypt_generic(td1,buffer, 255);
 	printf("%s\n", buffer);
 	printf("string length: %d\n", strlen(buffer));
-	mdecrypt_generic(td2, buffer, 256);
+	mdecrypt_generic(td2, buffer, 255);
 printf("%s\n", buffer);
 	
 	mcrypt_generic_deinit(td1);

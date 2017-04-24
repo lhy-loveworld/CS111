@@ -135,14 +135,15 @@ int main(int argc, char *argv[])
       struct sigaction sa;
 
       char *IV = "ABCDEFGHIJKLMNOP";
-      char key[16];
-      int keysize = 16;
-      bzero(key, keysize);
+      char key[40];
+      int keysize = 0;
+      bzero(key, 40);
         
       if (enc_flag) {
         td1 = mcrypt_module_open("twofish", NULL, "cfb", NULL);
         td2 = mcrypt_module_open("twofish", NULL, "cfb", NULL);
-        read(key_fd, key, 16);
+        read(key_fd, key, 32);
+        keysize = strlen(key);
         mcrypt_generic_init(td1, key, keysize, IV);
         mcrypt_generic_init(td2, key, keysize, IV);
       }      
@@ -189,14 +190,16 @@ int main(int argc, char *argv[])
                     if (i == 1) {
                       int len = strlen(buffer);
                       if (enc_flag) {
-                        mcrypt_generic(td1, buffer, 256);
+                        //len++;
+                        mcrypt_generic(td1, buffer, len);
                       }
                       write(newsockfd, buffer, len);
                     } else {
+                      int len = strlen(buffer);
                       if (enc_flag) {
-                        mdecrypt_generic(td2, buffer, 256);
+                        mdecrypt_generic(td2, buffer, len);
                       }
-                      for (j = 0; j < strlen(buffer); ++j) {
+                      for (j = 0; j < len; ++j) {
                         switch (buffer[j]) {
                           case 0x04:
                             close(ptoc_fd[1]);
