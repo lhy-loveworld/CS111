@@ -3,7 +3,12 @@
 #include <errno.h>
 #include <getopt.h>
 #include <time.h>
+#include <string.h>
+#include <pthread.h>
 #include "SortedList.h"
+
+int iterations = 1;
+SortedList_t l = {NULL, NULL, NULL};
 
 void Clock_gettime(clockid_t clk_id, struct timespec *tp){
 	if (clock_gettime(clk_id, tp) < 0) {
@@ -31,10 +36,21 @@ void random_keys(char *key) {
 	key = malloc(sizeof(char) * (len + 1));
 	int i;
 	for (i = 0; i < len; ++i) {
-		*(key + i) = (unsigned char) (rand() % 255 + 1);
+		key[i] = (char) (rand() % 255 + 1);
 	}
-	*(key + len) = '\0';
+	key[len] = '\0';
+	//printf("%s\n", key);
 }
+
+void *worker(void *elem) {
+	int i;
+	SortedListElement_t **elements = (SortedListElement_t **) elem;
+	for (i = 0; i < iterations; ++i) {
+		SortedList_insert(&l, elements[i]);
+	}
+	return NULL;
+}
+
 
 int main(int argc, char *argv[]) {
 
@@ -46,7 +62,6 @@ int main(int argc, char *argv[]) {
   };
 
   int threads = 1;
-  int iterations = 1;
   int arg_get;
 
   int opt_yield = 0;
@@ -92,25 +107,36 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  SortedList_t l = {NULL, NULL, NULL};
 
   srand(time(NULL));
 
-  SortedListElement_t *elements[iterations * threads];
-  char *rand_keys[iterations * threads];
+  SortedListElement_t *elements[threads][iterations];
+  char *rand_keys[threads][iterations];
 
   int i;
-  for (i = 0; i < (threads * iterations); ++i) {
-  	random_keys(rand_keys[i]);
-  	elements[i] = malloc(sizeof(SortedListElement_t));
-  	elements[i]->key = rand_keys[i];
-  	//SortedList_insert(&l, elements[i]);
+  int j;
+  for (i = 0; i < threads; ++i) {
+  	for (j = 0; j < iterations; ++j) {
+  		random_keys(rand_keys[i][j]);
+  		elements[i][j] = malloc(sizeof(SortedListElement_t));
+  		elements[i][j]->key = rand_keys[i][j];
+  		printf("%s\n", rand_keys[i][j]);
+  		//free(rand_keys[i][j]);
+ 			//SortedList_insert(&l, elements[i][j]); 	
+  	}
   }
   
   struct timespec *t = malloc(sizeof(struct timespec));
 	Clock_gettime(CLOCK_MONOTONIC, t);
 	long t_beg1 = t->tv_sec;
 	long t_beg2 = t->tv_nsec;
+
+	pthread_t p[threads];
+
+	for (i = 0; i < threads; ++i)
+  {
+  	//Pthread_create(&(p[i]), NULL, worker, elements[i]);
+  }
 
 	return 0;
 }
