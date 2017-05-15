@@ -40,9 +40,9 @@ set output 'lab2_add-1.png'
 
 # grep out only successful (sum=0)  unsynchronized runs
 plot \
-     "< grep add-none lab2_add.csv | grep '0$'" using ($2):($3) \
+     "< grep add-none lab2_add.csv | grep ',0$'" using ($2):($3) \
 	title 'w/o yields' with points lc rgb 'green', \
-     "< grep add-yield-none lab2_add.csv | grep '0$'" using ($2):($3) \
+     "< grep add-yield-none lab2_add.csv | grep ',0$'" using ($2):($3) \
 	title 'w/yields' with points lc rgb 'red'
 
 # per operation times vs # threads/iterations w/ and w/o yielding
@@ -84,13 +84,13 @@ set logscale y 10
 set output 'lab2_add-4.png'
 # grep out only successful (sum=0) yield runs
 plot \
-     "< grep add-yield-none lab2_add.csv | grep '0$'" using ($2):($3) \
+     "< grep add-yield-none lab2_add.csv | grep ',0$'" using ($2):($3) \
 	title 'unprotected w/yields' with points lc rgb 'red', \
-     "< grep add-yield-c lab2_add.csv | grep '0$'" using ($2):($3) \
+     "< grep add-yield-c lab2_add.csv | grep ',0$'" using ($2):($3) \
 	title 'CAS w/yields' with points lc rgb 'green', \
-     "< grep add-yield-m lab2_add.csv | grep '0$'" using ($2):($3) \
+     "< grep add-yield-m lab2_add.csv | grep ',0$'" using ($2):($3) \
 	title 'mutex w/yields' with points lc rgb 'blue', \
-     "< grep add-yield-s lab2_add.csv | grep '0$'" using ($2):($3) \
+     "< grep add-yield-s lab2_add.csv | grep ',0$'" using ($2):($3) \
 	title 'spin w/yields' with points lc rgb 'orange'
 
 set title "Add-5: per operation cost vs number of threads"

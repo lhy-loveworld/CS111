@@ -67,7 +67,7 @@ void *worker(void *elem) {
 	SortedListElement_t **element = (SortedListElement_t **) elem;
 	if (opt_lock) {
 		if (opt_lock == 1) {
-			Pthread_mutex_lock(&lock1);
+			pthread_mutex_lock(&lock1);
 		} else {
 			while (__sync_lock_test_and_set(&lock2, 1));
 		}
@@ -88,7 +88,7 @@ void *worker(void *elem) {
 	}
 	if (opt_lock) {
 		if (opt_lock == 1) {
-			Pthread_mutex_unlock(&lock1);
+			pthread_mutex_unlock(&lock1);
 		} else {
 			__sync_lock_release(&lock2);
 		}

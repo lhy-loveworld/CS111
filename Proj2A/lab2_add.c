@@ -133,11 +133,6 @@ void *addminus(void *it) {
 
 int main(int argc, char *argv[])
 {
-	struct timespec *t = malloc(sizeof(struct timespec));
-	Clock_gettime(CLOCK_MONOTONIC, t);
-	long t_beg1 = t->tv_sec;
-	long t_beg2 = t->tv_nsec;
-
 	counter = 0;
 
 	static struct option args[] = {
@@ -196,6 +191,11 @@ int main(int argc, char *argv[])
 
   int i;
   pthread_t p[threads];
+
+	struct timespec *t = malloc(sizeof(struct timespec));
+	Clock_gettime(CLOCK_MONOTONIC, t);
+	long t_beg1 = t->tv_sec;
+	long t_beg2 = t->tv_nsec;
 
   for (i = 0; i < threads; ++i)
   {
