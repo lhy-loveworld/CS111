@@ -7,7 +7,7 @@ set datafile separator ","
 # aggregate throughput (total operations per second for all threads combined)
 set title "List-1: throughput vs number of threads for mutex and spin-lock"
 set xlabel "Threads"
-set logscale x 10
+set logscale x 2
 set ylabel "total operations per second for all threads"
 set logscale y 10
 set output 'lab2b-1.png'
