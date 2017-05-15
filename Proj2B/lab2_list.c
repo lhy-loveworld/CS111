@@ -65,6 +65,23 @@ void *worker(void *elem) {
 	int i;
 	SortedListElement_t *tmp;
 	SortedListElement_t **element = (SortedListElement_t **) elem;
+	for (i = 0; i < iterations; ++i) {
+		if (opt_lock) {
+			if (opt_lock == 1) {
+				pthread_mutex_lock(&lock1);
+			} else {
+				while (__sync_lock_test_and_set(&lock2, 1));
+			}
+		}
+		SortedList_insert(&l, element[i]);
+		if (opt_lock) {
+			if (opt_lock == 1) {
+				pthread_mutex_unlock(&lock1);
+			} else {
+				__sync_lock_release(&lock2);
+			}
+		}
+	}
 	if (opt_lock) {
 		if (opt_lock == 1) {
 			pthread_mutex_lock(&lock1);
@@ -72,25 +89,33 @@ void *worker(void *elem) {
 			while (__sync_lock_test_and_set(&lock2, 1));
 		}
 	}
-	for (i = 0; i < iterations; ++i) {
-		SortedList_insert(&l, element[i]);
-	}
 	SortedList_length(&l);
-	for (i = 0; i < iterations; ++i) {
-		//printf("%s\n", element[i]->key);
-		tmp = SortedList_lookup(&l, element[i]->key);
-		if ((tmp == NULL) || (SortedList_delete(tmp))) {
-			fprintf(stderr, "corrupted list\n");
-			exit(2);
-		}
-		//SortedList_delete(tmp);
-		//printf("%d\n", SortedList_length(&l));
-	}
 	if (opt_lock) {
 		if (opt_lock == 1) {
 			pthread_mutex_unlock(&lock1);
 		} else {
 			__sync_lock_release(&lock2);
+		}
+	}
+	for (i = 0; i < iterations; ++i) {
+		if (opt_lock) {
+			if (opt_lock == 1) {
+				pthread_mutex_lock(&lock1);
+			} else {
+				while (__sync_lock_test_and_set(&lock2, 1));
+			}
+		}
+		tmp = SortedList_lookup(&l, element[i]->key);
+		if ((tmp == NULL) || (SortedList_delete(tmp))) {
+			fprintf(stderr, "corrupted list\n");
+			exit(2);
+		}
+		if (opt_lock) {
+			if (opt_lock == 1) {
+				pthread_mutex_unlock(&lock1);
+			} else {
+				__sync_lock_release(&lock2);
+			}
 		}
 	}
 	return NULL;
