@@ -61,7 +61,7 @@ set ylabel "total operations per second for all threads"
 set logscale y 10
 set output 'lab2b-4.png'
 
-# grep out only spin-locked, non-yield results
+# grep out only mutex, non-yield results
 plot \
      "< grep 'list-none-m' lab2b_list.csv | grep '1000,1,'" using ($2):(1e9/($7)) \
 	title 'lists = 1' with linespoints lc rgb 'red', \
