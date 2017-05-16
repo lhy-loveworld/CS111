@@ -63,13 +63,13 @@ set output 'lab2b-4.png'
 
 # grep out only spin-locked, non-yield results
 plot \
-     "< grep 'list-none-m' lab2b_list.csv | grep '1000,1$'" using ($2):(1e9/($7)) \
+     "< grep 'list-none-m' lab2b_list.csv | grep '1000,1,'" using ($2):(1e9/($7)) \
 	title 'lists = 1' with linespoints lc rgb 'red', \
-	"< grep 'list-none-m' lab2b_list.csv | grep '1000,4$'" using ($2):(1e9/($7)) \
+	"< grep 'list-none-m' lab2b_list.csv | grep '1000,4,'" using ($2):(1e9/($7)) \
 	title 'lists = 4' with linespoints lc rgb 'green', \
-     "< grep 'list-none-m' lab2b_list.csv | grep '1000,8$'" using ($2):(1e9/($7)) \
+     "< grep 'list-none-m' lab2b_list.csv | grep '1000,8,'" using ($2):(1e9/($7)) \
 	title 'lists = 8' with linespoints lc rgb 'blue', \
-	"< grep 'list-none-m' lab2b_list.csv | grep '1000,16$'" using ($2):(1e9/($7)) \
+	"< grep 'list-none-m' lab2b_list.csv | grep '1000,16,'" using ($2):(1e9/($7)) \
 	title 'lists = 16' with linespoints lc rgb 'yellow'
 
 # aggregate throughput (total operations per second for all threads combined) for spin-lock
@@ -83,11 +83,11 @@ set output 'lab2b-5.png'
 
 # grep out only spin-locked, non-yield results
 plot \
-     "< grep 'list-none-s' lab2b_list.csv | grep '1000,1$'" using ($2):(1e9/($7)) \
+     "< grep 'list-none-s' lab2b_list.csv | grep '1000,1,'" using ($2):(1e9/($7)) \
 	title 'lists = 1' with linespoints lc rgb 'red', \
-	"< grep 'list-none-s' lab2b_list.csv | grep '1000,4$'" using ($2):(1e9/($7)) \
+	"< grep 'list-none-s' lab2b_list.csv | grep '1000,4,'" using ($2):(1e9/($7)) \
 	title 'lists = 4' with linespoints lc rgb 'green', \
-     "< grep 'list-none-s' lab2b_list.csv | grep '1000,8$'" using ($2):(1e9/($7)) \
+     "< grep 'list-none-s' lab2b_list.csv | grep '1000,8,'" using ($2):(1e9/($7)) \
 	title 'lists = 8' with linespoints lc rgb 'blue', \
-	"< grep 'list-none-s' lab2b_list.csv | grep '1000,16$'" using ($2):(1e9/($7)) \
+	"< grep 'list-none-s' lab2b_list.csv | grep '1000,16,'" using ($2):(1e9/($7)) \
 	title 'lists = 16' with linespoints lc rgb 'yellow'
