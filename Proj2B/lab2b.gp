@@ -47,10 +47,10 @@ set output 'lab2b-3.png'
 plot \
      "< grep 'list-id-none' lab2b_list.csv" using ($2):($3) \
 	title 'w/o sync' with points lc rgb 'green', \
-     "< grep 'list-id-s' lab2b_list.csv" using ($2):($3) \
-	title 'w/ spin-lock' with points lc rgb 'red', \
 	"< grep 'list-id-m' lab2b_list.csv" using ($2):($3) \
-	title 'w/ mutex' with points lc rgb 'yellow'
+	title 'w/ mutex' with points lc rgb 'blue', \
+	 "< grep 'list-id-s' lab2b_list.csv" using ($2):($3) \
+	title 'w/ spin-lock' with points lc rgb 'red'
 
 # aggregate throughput (total operations per second for all threads combined) for mutex
 set title "List-4: throughput vs number of threads for mutex synchronized partitioned lists"
