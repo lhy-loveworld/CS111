@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS  = -g -Wall -lpthread
-sources = Makefile $(TARGET2_1).c $(TARGET2_2).c $(TARGET2_2).h README tests.sh lab2b_list.csv lab2b-1.png lab2b-2.png lab2b-3.png lab2b-4.png lab2b-5.png profile.sh profile.out
+sources = Makefile $(TARGET2_1).c $(TARGET2_2).c $(TARGET2_2).h README tests.sh lab2b_list.csv lab2b_1.png lab2b_2.png lab2b_3.png lab2b_4.png lab2b_5.png profile.sh profile.out
 TARGET = lab2
 TARGET2_1 = $(TARGET)_list
 TARGET2_2 = SortedList
@@ -23,12 +23,12 @@ profile:
 clean: 
 	 $(RM) $(TARGET2_1)
 	 $(RM) lab2b_list.csv
-	 $(RM) lab2b-1.png
-	 $(RM) lab2b-2.png
-	 $(RM) lab2b-3.png
-	 $(RM) lab2b-4.png
-	 $(RM) lab2b-5.png
+	 $(RM) lab2b_1.png
+	 $(RM) lab2b_2.png
+	 $(RM) lab2b_3.png
+	 $(RM) lab2b_4.png
+	 $(RM) lab2b_5.png
 	 
 dist:
-	 tar -czf $(TARGET)a-$(UID).tar.gz $(sources)
+	 tar -czf $(TARGET)b-$(UID).tar.gz $(sources)
 	

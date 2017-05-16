@@ -10,7 +10,7 @@ set xlabel "Threads"
 set logscale x 2
 set ylabel "total operations per second for all threads"
 set logscale y 10
-set output 'lab2b-1.png'
+set output 'lab2b_1.png'
 
 # grep out only mutex/spin-locked, non-yield results
 plot \
@@ -25,7 +25,7 @@ set xlabel "Threads"
 set logscale x 2
 set ylabel "time (ns)"
 set logscale y 10
-set output 'lab2b-2.png'
+set output 'lab2b_2.png'
 
 # grep out only mutex, non-yield results
 plot \
@@ -41,7 +41,7 @@ set logscale x 2
 set xrange [0.75:]
 set ylabel "Iterations per thread"
 set logscale y 10
-set output 'lab2b-3.png'
+set output 'lab2b_3.png'
 
 # grep out successful runs
 plot \
@@ -59,7 +59,7 @@ set xrange [0.75:14]
 set logscale x 2
 set ylabel "total operations per second for all threads"
 set logscale y 10
-set output 'lab2b-4.png'
+set output 'lab2b_4.png'
 
 # grep out only mutex, non-yield results
 plot \
@@ -79,7 +79,7 @@ set xrange [0.75:14]
 set logscale x 2
 set ylabel "total operations per second for all threads"
 set logscale y 10
-set output 'lab2b-5.png'
+set output 'lab2b_5.png'
 
 # grep out only spin-locked, non-yield results
 plot \
