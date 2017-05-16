@@ -319,7 +319,7 @@ int main(int argc, char *argv[]) {
 	long t_end1 = t->tv_sec;
 	long t_end2 = t->tv_nsec;
 
-	for (int i = 0; i < lists; ++i)
+	for (i = 0; i < lists; ++i)
 	{
 		if (SortedList_length(l + i)) {
 			fprintf(stderr, "not 0 length\n");
