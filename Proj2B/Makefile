@@ -27,6 +27,7 @@ clean:
 	 $(RM) $(TARGET2_1)-2.png
 	 $(RM) $(TARGET2_1)-3.png
 	 $(RM) $(TARGET2_1)-4.png
+	 $(RM) $(TARGET2_1)-5.png
 	 
 dist:
 	 tar -czf $(TARGET)a-$(UID).tar.gz $(sources)
