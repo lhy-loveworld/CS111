@@ -14,9 +14,9 @@ set output 'lab2b-1.png'
 
 # grep out only mutex/spin-locked, non-yield results
 plot \
-     "< grep 'list-none-m' lab2b_list.csv" using ($2):(1e9/($7)) \
+     "< grep 'list-none-m' lab2b_list.csv | grep '1000,1,'" using ($2):(1e9/($7)) \
 	title 'mutex' with linespoints lc rgb 'red', \
-     "< grep 'list-none-s' lab2b_list.csv" using ($2):(1e9/($7)) \
+     "< grep 'list-none-s' lab2b_list.csv | grep '1000,1,'" using ($2):(1e9/($7)) \
 	title 'spin-lock' with linespoints lc rgb 'green'
 
 # aggregate timing mutex waits
@@ -29,9 +29,9 @@ set output 'lab2b-2.png'
 
 # grep out only mutex, non-yield results
 plot \
-     "< grep 'list-none-m' lab2b_list.csv" using ($2):($8) \
+     "< grep 'list-none-m' lab2b_list.csv | grep '1000,1,'" using ($2):($8) \
 	title 'wait-for-lock time' with linespoints lc rgb 'red', \
-     "< grep 'list-none-m' lab2b_list.csv" using ($2):($7) \
+     "< grep 'list-none-m' lab2b_list.csv | grep '1000,1,'" using ($2):($7) \
 	title 'cost per operation' with linespoints lc rgb 'green'
 
 # how many threads/iterations we can run without failure (w/o yielding)

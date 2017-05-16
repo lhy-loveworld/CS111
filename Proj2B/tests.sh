@@ -18,7 +18,7 @@ for t in ${ls2[@]}; do
 done
 
 ls5=(1 2 4 8 12)
-ls6=(1 4 8 16)
+ls6=(4 8 16)
 for t in ${ls5[@]}; do
 	for l in ${ls6[@]}; do
 		./lab2_list --threads=$t --iterations=1000 --lists=$l --sync=m >> lab2b_list.csv
