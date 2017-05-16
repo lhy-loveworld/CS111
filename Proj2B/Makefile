@@ -15,7 +15,10 @@ tests: clean build
 	 @bash ./tests.sh
 
 graphs: tests
-	@gnuplot ./lab2b.gp
+	 @gnuplot ./lab2b.gp
+
+profile:
+	 @bash ./profile.sh
 
 clean: 
 	 $(RM) $(TARGET2_1)

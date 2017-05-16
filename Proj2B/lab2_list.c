@@ -9,12 +9,15 @@
 #include "SortedList.h"
 
 int iterations = 1;
-SortedList_t l = {NULL, NULL, NULL};
+int lists = 1;
+SortedList_t *l;
 int len_max = 10;
 int opt_lock = 0;
 int opt_yield = 0;
-pthread_mutex_t lock1 = PTHREAD_MUTEX_INITIALIZER;
-int lock2 = 0;
+pthread_mutex_t *lock1;
+int *lock2;
+long wait_total = 0;
+
 
 void Clock_gettime(clockid_t clk_id, struct timespec *tp){
 	if (clock_gettime(clk_id, tp) < 0) {
@@ -51,6 +54,13 @@ void Pthread_mutex_unlock(pthread_mutex_t *lock) {
 	}
 }
 
+void Pthread_mutex_init(pthread_mutex_t *mutex, const pthread_mutexattr_t *attr) {
+	if (pthread_mutex_init(mutex, attr)) {
+		fprintf(stderr, "pthread_mutex_init() failed: %s\n", strerror(errno));
+		exit(1);
+	}
+}
+
 void random_keys(char **key) {
 	int len = rand() % len_max + 1;
 	*key = malloc(sizeof(unsigned char) * (len + 1));
@@ -61,60 +71,96 @@ void random_keys(char **key) {
 	(*key)[len] = '\0';
 }
 
+unsigned long hash(const char *key) {
+  unsigned long val = 5381;
+  int c;
+  while ((c = *key++))
+    val = ((val << 5) + val) + c;
+  return val;
+}
+
 void *worker(void *elem) {
 	int i;
 	SortedListElement_t *tmp;
 	SortedListElement_t **element = (SortedListElement_t **) elem;
+	struct timespec t;
+	long t_beg;
+	int l_sub;
+	int len = 0;
 	for (i = 0; i < iterations; ++i) {
+		l_sub = hash(element[i]->key) % lists;
+		Clock_gettime(CLOCK_MONOTONIC, &t);
+		t_beg = 1e9 * t.tv_sec + t.tv_nsec;
 		if (opt_lock) {
 			if (opt_lock == 1) {
-				pthread_mutex_lock(&lock1);
+				pthread_mutex_lock(lock1 + l_sub);
 			} else {
-				while (__sync_lock_test_and_set(&lock2, 1));
+				while (__sync_lock_test_and_set(lock2 + l_sub, 1));
 			}
 		}
-		SortedList_insert(&l, element[i]);
+		Clock_gettime(CLOCK_MONOTONIC, &t);
+		wait_total += 1e9 * t.tv_sec + t.tv_nsec - t_beg;
+		SortedList_insert(l + l_sub, element[i]);
 		if (opt_lock) {
 			if (opt_lock == 1) {
-				pthread_mutex_unlock(&lock1);
+				pthread_mutex_unlock(lock1 + l_sub);
 			} else {
-				__sync_lock_release(&lock2);
+				__sync_lock_release(lock2 + l_sub);
 			}
 		}
 	}
-	if (opt_lock) {
-		if (opt_lock == 1) {
-			pthread_mutex_lock(&lock1);
-		} else {
-			while (__sync_lock_test_and_set(&lock2, 1));
+	Clock_gettime(CLOCK_MONOTONIC, &t);
+	t_beg = 1e9 * t.tv_sec + t.tv_nsec;
+	for (l_sub = 0; l_sub < lists; ++l_sub) {
+		if (opt_lock) {
+			if (opt_lock == 1) {
+				pthread_mutex_lock(lock1 + l_sub);
+			} else {
+				while (__sync_lock_test_and_set(lock2 + l_sub, 1));
+			}
 		}
 	}
-	SortedList_length(&l);
-	if (opt_lock) {
-		if (opt_lock == 1) {
-			pthread_mutex_unlock(&lock1);
-		} else {
-			__sync_lock_release(&lock2);
+	Clock_gettime(CLOCK_MONOTONIC, &t);
+	wait_total += 1e9 * t.tv_sec + t.tv_nsec - t_beg;
+	for (l_sub = 0; l_sub < lists; ++l_sub) {
+		len += SortedList_length(l + l_sub);
+	}
+
+	for (l_sub = 0; l_sub < lists; ++l_sub) {
+		if (opt_lock) {
+			if (opt_lock == 1) {
+				pthread_mutex_unlock(lock1 + l_sub);
+			} else {
+				__sync_lock_release(lock2 + l_sub);
+			}
 		}
 	}
+
 	for (i = 0; i < iterations; ++i) {
+		l_sub = hash(element[i]->key) % lists;
+		Clock_gettime(CLOCK_MONOTONIC, &t);
+		t_beg = 1e9 * t.tv_sec + t.tv_nsec;
+	
 		if (opt_lock) {
 			if (opt_lock == 1) {
-				pthread_mutex_lock(&lock1);
+				pthread_mutex_lock(lock1 + l_sub);
 			} else {
-				while (__sync_lock_test_and_set(&lock2, 1));
+				while (__sync_lock_test_and_set(lock2 + l_sub, 1));
 			}
 		}
-		tmp = SortedList_lookup(&l, element[i]->key);
+		Clock_gettime(CLOCK_MONOTONIC, &t);
+		wait_total += 1e9 * t.tv_sec + t.tv_nsec - t_beg;
+	
+		tmp = SortedList_lookup(l + l_sub, element[i]->key);
 		if ((tmp == NULL) || (SortedList_delete(tmp))) {
 			fprintf(stderr, "corrupted list\n");
 			exit(2);
 		}
 		if (opt_lock) {
 			if (opt_lock == 1) {
-				pthread_mutex_unlock(&lock1);
+				pthread_mutex_unlock(lock1 + l_sub);
 			} else {
-				__sync_lock_release(&lock2);
+				__sync_lock_release(lock2 + l_sub);
 			}
 		}
 	}
@@ -133,6 +179,7 @@ void Sigaction(int sig, const struct sigaction *act, struct sigaction *oact) {
   }
 }
 
+
 int main(int argc, char *argv[]) {
 
 	static struct option args[] = {
@@ -140,6 +187,7 @@ int main(int argc, char *argv[]) {
     {"iterations", 1, NULL, 'i'},
     {"yield", 1, NULL, 'y'},
     {"sync", 1, NULL, 's'},
+    {"lists", 1, NULL, 'l'},
     {0, 0, 0, 0}
   };
 
@@ -175,6 +223,10 @@ int main(int argc, char *argv[]) {
 		        exit(1);
   				}
   			}
+      }
+      case 'l': {
+				lists = atoi(optarg);
+        break;
       }
       case 'y': {
       	int c = 0;
@@ -228,14 +280,23 @@ int main(int argc, char *argv[]) {
   		elements[i][j] = malloc(sizeof(SortedListElement_t));
   		random_keys(&rand_keys[i][j]);
   		elements[i][j]->key = rand_keys[i][j];
-  		//free(rand_keys[i][j]);
-  		//printf("%s\n", elements[i][j]->key);
-  		//
- 			//SortedList_insert(&l, elements[i][j]); 	
   	}
   }
   
+  l = malloc(sizeof(SortedList_t) * lists);
+  lock1 = malloc(sizeof(pthread_mutex_t) * lists);
+  lock2 = malloc(sizeof(int) * lists);
+  
+  for (i = 0; i < lists; ++i) {
+  	l[i].prev = NULL;
+  	l[i].next = NULL;
+  	l[i].key = NULL;
+  	Pthread_mutex_init(lock1 + i, NULL);
+  	lock2[i] = 0;
+  }
+
 	pthread_t p[threads];
+
 
   struct timespec *t = malloc(sizeof(struct timespec));
 	Clock_gettime(CLOCK_MONOTONIC, t);
@@ -258,14 +319,19 @@ int main(int argc, char *argv[]) {
 	long t_end1 = t->tv_sec;
 	long t_end2 = t->tv_nsec;
 
-	if (SortedList_length(&l)) {
-		fprintf(stderr, "not 0 length\n");
-		exit(2);
+	for (int i = 0; i < lists; ++i)
+	{
+		if (SortedList_length(l + i)) {
+			fprintf(stderr, "not 0 length\n");
+			exit(2);
+		}
 	}
+
 	long t_run = (t_end1 - t_beg1) * 1e9 + t_end2 - t_beg2;
 	int oprts = threads * iterations * 3;
-	int lists=1;
+	int locks = threads * (iterations * 2 + lists);
 	char yieldopts[8][5] = {"none", "i", "d", "id", "l", "il", "dl", "idl"}, syncopts[3][5] = {"none", "m", "s"};
-	printf("list-%s-%s,%d,%d,%d,%d,%ld,%ld\n", yieldopts[opt_yield], syncopts[opt_lock], threads, iterations, lists, oprts, t_run, t_run / oprts);
+	printf("%ld, %d\n", wait_total, locks);
+	printf("list-%s-%s,%d,%d,%d,%d,%ld,%ld,%ld\n", yieldopts[opt_yield], syncopts[opt_lock], threads, iterations, lists, oprts, t_run, t_run / oprts, wait_total / locks);
 	return 0;
 }
