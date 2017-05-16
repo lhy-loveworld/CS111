@@ -331,7 +331,6 @@ int main(int argc, char *argv[]) {
 	int oprts = threads * iterations * 3;
 	int locks = threads * (iterations * 2 + lists);
 	char yieldopts[8][5] = {"none", "i", "d", "id", "l", "il", "dl", "idl"}, syncopts[3][5] = {"none", "m", "s"};
-	printf("%ld, %d\n", wait_total, locks);
 	printf("list-%s-%s,%d,%d,%d,%d,%ld,%ld,%ld\n", yieldopts[opt_yield], syncopts[opt_lock], threads, iterations, lists, oprts, t_run, t_run / oprts, wait_total / locks);
 	return 0;
 }

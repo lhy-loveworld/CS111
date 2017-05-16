@@ -55,6 +55,7 @@ plot \
 # aggregate throughput (total operations per second for all threads combined) for mutex
 set title "List-4: throughput vs number of threads for mutex synchronized partitioned lists"
 set xlabel "Threads"
+set xrange [0.75:14]
 set logscale x 2
 set ylabel "total operations per second for all threads"
 set logscale y 10
@@ -74,6 +75,7 @@ plot \
 # aggregate throughput (total operations per second for all threads combined) for spin-lock
 set title "List-5: throughput vs number of threads for spin-lock-synchronized partitioned lists"
 set xlabel "Threads"
+set xrange [0.75:14]
 set logscale x 2
 set ylabel "total operations per second for all threads"
 set logscale y 10
