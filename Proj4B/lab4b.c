@@ -170,6 +170,7 @@ int main(int argc, char *argv[]) {
     } else {
       if (ret_poll == 1) {
       	Check_btn();
+        Check_tmp();
         if (pfd[0].revents & POLLIN) {
         	bzero(buffer, 20);
           fgets(buffer, 20, stdin);
