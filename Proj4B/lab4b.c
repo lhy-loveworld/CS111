@@ -138,9 +138,14 @@ int main(int argc, char *argv[]) {
         }
       } else {
       	int btn_status = mraa_gpio_read(btn);
-      	if (btn) {
-      		if (btn > 0) {
-      			Shutdown();
+      	if (!btn) {
+      		Shutdown();
+      	} else {
+      		if (btn < 0) {
+      			fprintf(stderr, "mraa_gpio_read() failed: %s\n", strerror(errno));
+          	mraa_aio_close(tmp);
+          	mraa_gpio_close(btn);
+          	exit(1);
       		}
       	}
       }
