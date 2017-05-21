@@ -138,10 +138,10 @@ int main(int argc, char *argv[]) {
         }
       } else {
       	int btn_status = mraa_gpio_read(btn);
-      	if (!btn) {
+      	if (!btn_status) {
       		Shutdown();
       	} else {
-      		if (btn < 0) {
+      		if (btn_status < 0) {
       			fprintf(stderr, "mraa_gpio_read() failed: %s\n", strerror(errno));
           	mraa_aio_close(tmp);
           	mraa_gpio_close(btn);
