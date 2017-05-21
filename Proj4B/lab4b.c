@@ -67,7 +67,7 @@ void Check_tmp() {
 	time(&rawtime);
   info = localtime(&rawtime);
 
-  if (info->tm_sec >= sample) {
+  if (info->tm_sec == sample) {
   	int a = mraa_aio_read(tmp);
   	if (a < 0) {
   		fprintf(stderr, "mraa_aio_read() failed: %s\n", strerror(errno));
