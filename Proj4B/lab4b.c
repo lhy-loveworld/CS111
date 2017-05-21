@@ -64,6 +64,75 @@ int main(int argc, char *argv[]) {
   const int B = 4275;
   const int R0 = 100000;
   mraa_aio_context tmp;
+  mraa_gpio_context btn;
+
+  tmp = mraa_aio_init(0);
+  btn = mraa_gpio_init(3);
+  if (tmp == NULL) {
+  	fprintf(stderr, "mraa_aio_init() fail\n");
+  	exit(1);
+  }
+  if (btn == NULL) {
+  	fprintf(stderr, "mraa_gpio_init() fail\n");
+  	mraa_aio_close(tmp);
+  	exit(1);
+  }
+
+  mraa_gpio_dir(btn, MRAA_GPIO_IN);
+
+  struct pollfd pfd;
+  pfd.fd = 0;
+  pfd.events = POLLIN | POLLERR;
+
+  time_t rawtime;
+  struct tm *info;
+  char time_str[9];
+
+  while (1) {
+    ret_poll = poll(pfd, 1, 0);
+    if (ret_poll == -1) {
+      fprintf(stderr, "poll() failed: %s\n", strerror(errno));
+      mraa_aio_close(tmp);
+      exit(1);
+    } else {
+      if (ret_poll == 1) {
+        if (pfd.revents & POLLIN) {
+          read_count = read(pfd.fd, buffer, 100);
+          if (read_count == -1) {
+            fprintf(stderr, "read() failed: %s\n", strerror(errno));
+            mraa_aio_close(tmp);
+            mraa_gpio_close(btn);
+            exit(1);
+          } else {
+          }
+        }
+        if (fds[i].revents & POLLERR) {
+        	fprintf(stderr, "read() failed: %s\n", strerror(errno));
+          mraa_aio_close(tmp);
+          mraa_gpio_close(btn);
+          exit(1);
+        }
+      } else {
+      	int btn_status = mraa_gpio_read(btn);
+      	if (btn) {
+      		if (btn > 0) {
+      			time(&rawtime);
+      			info = localtime(&rawtime);
+      			strftime(time_str, 9, "%H:%M:%S", info);
+      			if (log_flag) {
+      				dprintf(log_fd, "%s SHUTDOWN\n", time_str);
+      			} else {
+      				printf("%s SHUTDOWN\n", time_str);
+      			}
+      			mraa_aio_close(tmp);
+            mraa_gpio_close(btn);
+            exit(0);
+      		}
+      	}
+      }
+    }
+  }
+
   if (log_flag) dprintf(log_fd, "abcdefg\n");
   return 0;
 }
