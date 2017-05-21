@@ -18,6 +18,7 @@
 int log_flag = 0;
 int log_fd;
 int scale_flag = 0;
+int stop_flag = 0;
 int period = 1;
 int sample = -1;
 
@@ -37,9 +38,9 @@ void Shutdown() {
   strftime(time_str, 9, "%H:%M:%S", info);
   if (log_flag) {
     dprintf(log_fd, "%s SHUTDOWN\n", time_str);
-  } else {
+  }/* else {
     printf("%s SHUTDOWN\n", time_str);
-  }
+  }*/
   mraa_aio_close(tmp);
   mraa_gpio_close(btn);
   exit(0);
@@ -81,8 +82,17 @@ void Check_tmp() {
   	double tmp_C = 1.0/(log(R/R0)/B+1/298.15)-273.15;
   	strftime(time_str, 9, "%H:%M:%S", info);
 
-  	if (!scale_flag) printf("%s %f\n", time_str, tmp_C * 1.8 + 32);
-  	
+  	if (stop_flag) {
+	  	if (!scale_flag) {
+	  		printf("%s %f\n", time_str, tmp_C * 1.8 + 32);
+	  		if (log_flag)
+	  			dprintf(log_fd, "%s %f\n", time_str, tmp_C * 1.8 + 32);
+	  	} else {
+	  		printf("%s %f\n", time_str, tmp_C);
+	  		if (log_flag)
+	  			dprintf(log_fd, "%s %f\n", time_str, tmp_C);
+	  	}
+  	}
   	sample = (info->tm_sec + period) % 60;
   }
 }
@@ -149,8 +159,7 @@ int main(int argc, char *argv[]) {
   pfd[0].fd = 0;
   pfd[0].events = POLLIN | POLLERR;
 
-  char buffer[100];
-  bzero(buffer, 100);
+  char buffer[20];
 
   while (1) {
     int ret_poll = poll(pfd, 1, 0);
@@ -162,13 +171,36 @@ int main(int argc, char *argv[]) {
       if (ret_poll == 1) {
       	Check_btn();
         if (pfd[0].revents & POLLIN) {
-          int read_count = read(pfd[0].fd, buffer, 100);
-          if (read_count == -1) {
-            fprintf(stderr, "read() failed: %s\n", strerror(errno));
-            mraa_aio_close(tmp);
-            mraa_gpio_close(btn);
-            exit(1);
+        	bzero(buffer, 20);
+          gets(buffer);
+          if (!strcmp(buffer, "OFF")) {
+          	dprintf(log_fd, "%s\n", buffer);
+          	Shutdown();
           } else {
+          	if (!strcmp(buffer, "STOP")) {
+          		dprintf(log_fd, "%s\n", buffer);
+          		stop_flag = 1;
+          	} else {
+          		if (!strcmp(buffer, "START")) {
+          			dprintf(log_fd, "%s\n", buffer);
+          			stop_flag = 0;
+          		} else {
+          			if (!strcmp(buffer, "SCALE=F")) {
+          				dprintf(log_fd, "%s\n", buffer);
+          				scale_flag = 0;
+          			} else {
+          				if (!strcmp(buffer, "SCALE=C")) {
+	          				dprintf(log_fd, "%s\n", buffer);
+	          				scale_flag = 1;
+	          			} else {
+	          				if ((!strncmp(buffer, "PERIOD=", 7)) && (buffer[7] < 58) && (buffer[7] > 47)) {
+		          				dprintf(log_fd, "%s\n", buffer);
+		          				period = atoi(buffer + 7);
+		          			}
+	          			}
+          			}
+          		}
+          	}
           }
         }
         if (pfd[0].revents & POLLERR) {
@@ -184,6 +216,5 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  if (log_flag) dprintf(log_fd, "abcdefg\n");
   return 0;
 }

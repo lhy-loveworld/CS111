@@ -1,4 +1,4 @@
-abcdefg
-abcdefg
-abcdefg
-abcdefg
+OFF
+START
+STOP
+LSLSLSS
