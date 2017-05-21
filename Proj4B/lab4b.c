@@ -82,7 +82,7 @@ void Check_tmp() {
   	double tmp_C = 1.0/(log(R/R0)/B+1/298.15)-273.15;
   	strftime(time_str, 9, "%H:%M:%S", info);
 
-  	if (stop_flag) {
+  	if (!stop_flag) {
 	  	if (!scale_flag) {
 	  		printf("%s %f\n", time_str, tmp_C * 1.8 + 32);
 	  		if (log_flag)
@@ -172,29 +172,29 @@ int main(int argc, char *argv[]) {
       	Check_btn();
         if (pfd[0].revents & POLLIN) {
         	bzero(buffer, 20);
-          gets(buffer);
-          if (!strcmp(buffer, "OFF")) {
-          	dprintf(log_fd, "%s\n", buffer);
+          fgets(buffer, 20, stdin);
+          if (!strcmp(buffer, "OFF\n")) {
+          	dprintf(log_fd, "%s", buffer);
           	Shutdown();
           } else {
-          	if (!strcmp(buffer, "STOP")) {
-          		dprintf(log_fd, "%s\n", buffer);
+          	if (!strcmp(buffer, "STOP\n")) {
+          		dprintf(log_fd, "%s", buffer);
           		stop_flag = 1;
           	} else {
-          		if (!strcmp(buffer, "START")) {
-          			dprintf(log_fd, "%s\n", buffer);
+          		if (!strcmp(buffer, "START\n")) {
+          			dprintf(log_fd, "%s", buffer);
           			stop_flag = 0;
           		} else {
-          			if (!strcmp(buffer, "SCALE=F")) {
-          				dprintf(log_fd, "%s\n", buffer);
+          			if (!strcmp(buffer, "SCALE=F\n")) {
+          				dprintf(log_fd, "%s", buffer);
           				scale_flag = 0;
           			} else {
-          				if (!strcmp(buffer, "SCALE=C")) {
-	          				dprintf(log_fd, "%s\n", buffer);
+          				if (!strcmp(buffer, "SCALE=C\n")) {
+	          				dprintf(log_fd, "%s", buffer);
 	          				scale_flag = 1;
 	          			} else {
 	          				if ((!strncmp(buffer, "PERIOD=", 7)) && (buffer[7] < 58) && (buffer[7] > 47)) {
-		          				dprintf(log_fd, "%s\n", buffer);
+		          				dprintf(log_fd, "%s", buffer);
 		          				period = atoi(buffer + 7);
 		          			}
 	          			}
