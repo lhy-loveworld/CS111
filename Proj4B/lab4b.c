@@ -17,6 +17,12 @@
 
 int log_flag = 0;
 int log_fd;
+int scale_flag = 0;
+int period = 1;
+int sample = 0;
+
+const int B = 4275;
+const int R0 = 100000;
 
 mraa_aio_context tmp;
 mraa_gpio_context btn;
@@ -39,6 +45,48 @@ void Shutdown() {
   exit(0);
 }
 
+void Check_btn() {
+	int btn_status = mraa_gpio_read(btn);
+  if (btn_status > 0) {
+    Shutdown();
+  } else {
+    if (btn_status < 0) {
+      fprintf(stderr, "mraa_gpio_read() failed: %s\n", strerror(errno));
+      mraa_aio_close(tmp);
+      mraa_gpio_close(btn);
+      exit(1);
+    }
+  }
+}
+
+void Check_tmp() {
+	time_t rawtime;
+  struct tm *info;
+  char time_str[9];
+
+	time(&rawtime);
+  info = localtime(&rawtime);
+
+  if (info->tm_sec >= sample) {
+  	int a = mraa_aio_read(tmp);
+  	if (a < 0) {
+  		fprintf(stderr, "mraa_aio_read() failed: %s\n", strerror(errno));
+      mraa_aio_close(tmp);
+      mraa_gpio_close(btn);
+      exit(1);
+  	}
+  	float R = 1023.0 / a - 1.0;
+  	R = R0 * R;
+
+  	float tmp_F = 1/(log(R/10000)/B+1/298.15)-273.15;
+  	strftime(time_str, 9, "%H:%M:%S", info);
+  	
+  	if (!scale_flag) printf("%s %f\n", time_str, tmp_F);
+  	
+  	sample = (info->tm_sec + period) % 60;
+  }
+}
+
 int main(int argc, char *argv[]) {
 
 	static struct option args[] = {
@@ -49,8 +97,6 @@ int main(int argc, char *argv[]) {
   };
 
 
-  int scale_flag = 0;
-  int period = 1;
   int arg_get;
 
   while ((arg_get = getopt_long(argc, argv, "", args, NULL)) != -1) {
@@ -84,9 +130,6 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  const int B = 4275;
-  const int R0 = 100000;
-
 
   tmp = mraa_aio_init(0);
   btn = mraa_gpio_init(3);
@@ -106,9 +149,6 @@ int main(int argc, char *argv[]) {
   pfd[0].fd = 0;
   pfd[0].events = POLLIN | POLLERR;
 
-  time_t rawtime;
-  struct tm *info;
-  char time_str[9];
   char buffer[100];
   bzero(buffer, 100);
 
@@ -120,6 +160,7 @@ int main(int argc, char *argv[]) {
       exit(1);
     } else {
       if (ret_poll == 1) {
+      	Check_btn();
         if (pfd[0].revents & POLLIN) {
           int read_count = read(pfd[0].fd, buffer, 100);
           if (read_count == -1) {
@@ -137,17 +178,8 @@ int main(int argc, char *argv[]) {
           exit(1);
         }
       } else {
-      	int btn_status = mraa_gpio_read(btn);
-      	if (btn_status > 0) {
-      		Shutdown();
-      	} else {
-      		if (btn_status < 0) {
-      			fprintf(stderr, "mraa_gpio_read() failed: %s\n", strerror(errno));
-          	mraa_aio_close(tmp);
-          	mraa_gpio_close(btn);
-          	exit(1);
-      		}
-      	}
+      	Check_btn();
+      	Check_tmp();
       }
     }
   }
