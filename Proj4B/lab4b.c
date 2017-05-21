@@ -19,7 +19,7 @@ int log_flag = 0;
 int log_fd;
 int scale_flag = 0;
 int period = 1;
-int sample = 0;
+int sample = -1;
 
 const int B = 4275;
 const int R0 = 100000;
@@ -67,7 +67,7 @@ void Check_tmp() {
 	time(&rawtime);
   info = localtime(&rawtime);
 
-  if (info->tm_sec == sample) {
+  if ((info->tm_sec == sample) || (sample < 0)){
   	int a = mraa_aio_read(tmp);
   	if (a < 0) {
   		fprintf(stderr, "mraa_aio_read() failed: %s\n", strerror(errno));
