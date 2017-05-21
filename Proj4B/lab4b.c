@@ -75,10 +75,10 @@ void Check_tmp() {
       mraa_gpio_close(btn);
       exit(1);
   	}
-  	float R = 1023.0 / a - 1.0;
+  	double R = 1023.0 / a - 1.0;
   	R = R0 * R;
 
-  	float tmp_F = 1.0/(log(R/R0)/B+1/298.15)-273.15;
+  	double tmp_F = 1.0/(log(R/R0)/B+1/298.15)-273.15;
   	strftime(time_str, 9, "%H:%M:%S", info);
 
   	if (!scale_flag) printf("%s %f\n", time_str, tmp_F);
