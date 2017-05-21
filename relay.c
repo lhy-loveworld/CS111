@@ -43,7 +43,7 @@ int main(int argc, char *argv[]) {
   pfd[0].events = POLLIN | POLLERR;
 
   char buffer[20];
-
+  mraa_gpio_write(rel, 0);
   while (1) {
     int ret_poll = poll(pfd, 1, 0);
     if (ret_poll == -1) {
@@ -80,6 +80,7 @@ int main(int argc, char *argv[]) {
         if (a > 400) {
           status = 1 - status;
           mraa_gpio_write(rel, status);
+	  sleep(2);
         }
       }
     }
