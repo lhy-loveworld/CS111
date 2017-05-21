@@ -113,7 +113,7 @@ int main(int argc, char *argv[]) {
   bzero(buffer, 100);
 
   while (1) {
-    ret_poll = poll(pfd, 1, 0);
+    int ret_poll = poll(pfd, 1, 0);
     if (ret_poll == -1) {
       fprintf(stderr, "poll() failed: %s\n", strerror(errno));
       mraa_aio_close(tmp);
