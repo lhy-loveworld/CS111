@@ -78,9 +78,9 @@ void Check_tmp() {
   	float R = 1023.0 / a - 1.0;
   	R = R0 * R;
 
-  	float tmp_F = 1/(log(R/10000)/B+1/298.15)-273.15;
+  	float tmp_F = 1.0/(log(R/R0)/B+1/298.15)-273.15;
   	strftime(time_str, 9, "%H:%M:%S", info);
-  	
+
   	if (!scale_flag) printf("%s %f\n", time_str, tmp_F);
   	
   	sample = (info->tm_sec + period) % 60;
