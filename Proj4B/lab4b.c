@@ -15,6 +15,30 @@
 #include <math.h>
 #include "mraa/aio.h"
 
+int log_flag = 0;
+int log_fd;
+
+mraa_aio_context tmp;
+mraa_gpio_context btn;
+
+void Shutdown() {
+	time_t rawtime;
+  struct tm *info;
+  char time_str[9];
+
+	time(&rawtime);
+  info = localtime(&rawtime);
+  strftime(time_str, 9, "%H:%M:%S", info);
+  if (log_flag) {
+    dprintf(log_fd, "%s SHUTDOWN\n", time_str);
+  } else {
+    printf("%s SHUTDOWN\n", time_str);
+  }
+  mraa_aio_close(tmp);
+  mraa_gpio_close(btn);
+  exit(0);
+}
+
 int main(int argc, char *argv[]) {
 
 	static struct option args[] = {
@@ -24,8 +48,7 @@ int main(int argc, char *argv[]) {
     {0, 0, 0, 0}
   };
 
-  int log_flag = 0;
-  int log_fd;
+
   int scale_flag = 0;
   int period = 1;
   int arg_get;
@@ -63,8 +86,7 @@ int main(int argc, char *argv[]) {
 
   const int B = 4275;
   const int R0 = 100000;
-  mraa_aio_context tmp;
-  mraa_gpio_context btn;
+
 
   tmp = mraa_aio_init(0);
   btn = mraa_gpio_init(3);
@@ -80,13 +102,15 @@ int main(int argc, char *argv[]) {
 
   mraa_gpio_dir(btn, MRAA_GPIO_IN);
 
-  struct pollfd pfd;
-  pfd.fd = 0;
-  pfd.events = POLLIN | POLLERR;
+  struct pollfd pfd[1];
+  pfd[0].fd = 0;
+  pfd[0].events = POLLIN | POLLERR;
 
   time_t rawtime;
   struct tm *info;
   char time_str[9];
+  char buffer[100];
+  bzero(buffer, 100);
 
   while (1) {
     ret_poll = poll(pfd, 1, 0);
@@ -96,8 +120,8 @@ int main(int argc, char *argv[]) {
       exit(1);
     } else {
       if (ret_poll == 1) {
-        if (pfd.revents & POLLIN) {
-          read_count = read(pfd.fd, buffer, 100);
+        if (pfd[0].revents & POLLIN) {
+          int read_count = read(pfd[0].fd, buffer, 100);
           if (read_count == -1) {
             fprintf(stderr, "read() failed: %s\n", strerror(errno));
             mraa_aio_close(tmp);
@@ -106,7 +130,7 @@ int main(int argc, char *argv[]) {
           } else {
           }
         }
-        if (fds[i].revents & POLLERR) {
+        if (pfd[0].revents & POLLERR) {
         	fprintf(stderr, "read() failed: %s\n", strerror(errno));
           mraa_aio_close(tmp);
           mraa_gpio_close(btn);
@@ -116,17 +140,7 @@ int main(int argc, char *argv[]) {
       	int btn_status = mraa_gpio_read(btn);
       	if (btn) {
       		if (btn > 0) {
-      			time(&rawtime);
-      			info = localtime(&rawtime);
-      			strftime(time_str, 9, "%H:%M:%S", info);
-      			if (log_flag) {
-      				dprintf(log_fd, "%s SHUTDOWN\n", time_str);
-      			} else {
-      				printf("%s SHUTDOWN\n", time_str);
-      			}
-      			mraa_aio_close(tmp);
-            mraa_gpio_close(btn);
-            exit(0);
+      			Shutdown();
       		}
       	}
       }
