@@ -1,0 +1,46 @@
+... Using temporary testing directory /tmp/TestTemp.758
+... untaring
+Makefile
+lab4b.c
+README
+tests.sh
+... checking for expected files
+        README ... OK
+        Makefile ... OK
+... checking for submitter info in README
+        NAME: ... HongyangLi
+        EMAIL: ... hyli@g.ucla.edu
+        ID: ... 304759850 != 304759850
+... checking for expected make targets
+        clean ... OK
+        dist ... OK
+        check ... OK
+... checking for other files of expected types
+        lab4b.c ... OK
+... building default target(s)
+gcc -o lab4b lab4b.c -g -Wall -lmraa -lm
+... checking for expected products
+        lab4b ... OK
+... lab4b detects/reports bogus arguments
+./lab4b: unrecognized option '--bogus'
+unrecognized argument
+... lab4b supports --scale, --perios, --log
+... lab4b supports and logs all sensor commands
+   ... SCALE=F: OK
+   ... PERIOD=1: OK
+   ... START: OK
+   ... STOP: OK
+   ... OFF: OK
+   ... SHUTDOWN: OK
+... correct reporting format
+NO VALID REPORTS IN LOGFILE:
+SCALE=F
+PERIOD=1
+START
+STOP
+OFF
+02:21:38 SHUTDOWN
+
+SUBMISSION lab4b-304759850.tar.gz ... fails sanity check with 1 errors!
+
+
