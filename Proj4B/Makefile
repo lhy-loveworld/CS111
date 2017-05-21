@@ -9,9 +9,9 @@ all: build
 
 build: $(TARGET).c
 ifeq ($(platform),)
-	 $(CC) -o $(TARGET) $(TARGET).c $(CFLAGS)
-else
 	 $(CC) -o $(TARGET) $(TARGET).c $(CFLAGS) -DDUMMY
+else
+	 $(CC) -o $(TARGET) $(TARGET).c $(CFLAGS)
 endif
 
 check: clean build
