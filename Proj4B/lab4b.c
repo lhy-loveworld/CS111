@@ -84,13 +84,13 @@ void Check_tmp() {
 
   	if (!stop_flag) {
 	  	if (!scale_flag) {
-	  		printf("%s %3.1f\n", time_str, tmp_C * 1.8 + 32);
+	  		printf("%s %4.1f\n", time_str, tmp_C * 1.8 + 32);
 	  		if (log_flag)
-	  			dprintf(log_fd, "%s %3.1f\n", time_str, tmp_C * 1.8 + 32);
+	  			dprintf(log_fd, "%s %4.1f\n", time_str, tmp_C * 1.8 + 32);
 	  	} else {
-	  		printf("%s %3.1f\n", time_str, tmp_C);
+	  		printf("%s %4.1f\n", time_str, tmp_C);
 	  		if (log_flag)
-	  			dprintf(log_fd, "%s %3.1f\n", time_str, tmp_C);
+	  			dprintf(log_fd, "%s %4.1f\n", time_str, tmp_C);
 	  	}
   	}
   	sample = (info->tm_sec + period) % 60;
