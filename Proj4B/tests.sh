@@ -45,7 +45,7 @@ else
 	egrep '[0-9][0-9]:[0-9][0-9]:[0-9][0-9] [0-9][0-9].[0-9]' log.txt > /dev/null
 	if [ $? -eq 0 ] 
 	then
-		echo "	... Correct temperature report format: OK"
+		echo "   ... Correct temperature report format: OK"
 	else
 		echo "Did not log temperature"
 		let errors+=1
