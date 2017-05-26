@@ -16,17 +16,24 @@
 #include "mraa/aio.h"
 
 mraa_gpio_context rel;
-
+mraa_aio_context snd;
+int status = 0;
 
 int main(int argc, char *argv[]) {
 
 
-
+  snd = mraa_aio_init(0);
   rel = mraa_gpio_init(3);
+  
 
+  if (snd == NULL) {
+    fprintf(stderr, "mraa_aio_init() fail\n");
+    exit(1);
+  }
   if (rel == NULL) {
-  	fprintf(stderr, "mraa_gpio_init() fail\n");
-  	exit(1);
+    fprintf(stderr, "mraa_gpio_init() fail\n");
+    mraa_aio_close(snd);
+    exit(1);
   }
 
   mraa_gpio_dir(rel, MRAA_GPIO_OUT);
@@ -50,14 +57,29 @@ int main(int argc, char *argv[]) {
           fgets(buffer, 20, stdin);
           if (!strcmp(buffer, "OFF\n")) {
           	mraa_gpio_write(rel, 0);
+            status = 0;
           } else {
             mraa_gpio_write(rel, 1);
+            status = 1;
           }
         }
         if (pfd[0].revents & POLLERR) {
         	fprintf(stderr, "read() failed: %s\n", strerror(errno));
           mraa_gpio_close(rel);
+          mraa_aio_close(snd);
           exit(1);
+        }
+      } else {
+        int a = mraa_aio_read(snd);
+        if (a < 0) {
+          fprintf(stderr, "mraa_aio_read() failed: %s\n", strerror(errno));
+          mraa_aio_close(snd);
+          mraa_gpio_close(rel);
+          exit(1);
+        }
+        if (a > 400) {
+          status = 1 - status;
+          mraa_gpio_write(rel, status);
         }
       }
     }
