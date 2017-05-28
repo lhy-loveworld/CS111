@@ -21,14 +21,11 @@ int write_fd;
 int bsize;
 int group_num;
 int last_group;
+int file_offset;
 
 struct ext2_super_block *sb;
 struct ext2_group_desc *gp;
 struct ext2_inode inode;
-
-__u32 int32;
-__u16 int16;
-__u8 int8;
 
 void superblock_summary() {
 	sb = malloc(sizeof(struct ext2_super_block));
@@ -71,128 +68,176 @@ void group_summary() {
 }
 
 void bfree_summary() {
-	int i,j;
+	int i;
+	int j = 1;
 	int start;
-	char res = -1;
-	char tmp;
+	__u8 bitmask = 0;
+	__u8 tmp;
 	int blocknum;
 
-	for(i=0; i<group_num; i++){
+	for(i=0; i < group_num; i++){
 		start = gp[i].bg_block_bitmap * bsize;
 		blocknum = (i < group_num - 1) ? sb->s_inodes_per_group : last_group;
-		while(j <= blocknum){	//the last one might be less than it.
-			if(res == -1){
+		while(j <= blocknum) {	
+			if(!bitmask){
 				pread(file_fd, &tmp, 1, start++);
-				res = 7;
+				bitmask = 1;
 			}
-			if((int8 & (1 << res))==0)
+			if((tmp & bitmask) == 0)
 				printf("BFREE,%d\n", j);
 			j++;
-			res--;
+			bitmask <<= 1;
 		}
 	}
 }
 
 void ifree_summary() {
-	int i,j=1;
+	int i;
+	int j = 1;
 	int inode_start;
-	int res=-1;
-	char tmp;
+	__u8 bitmask = 0;
+	__u8 tmp;
 
 	for(i=0;i<group_num;i++){
-		inode_start=gp[i].bg_inode_bitmap*bsize;
-		while(j<=sb->s_inodes_per_group){	//the last one might be less than it.
-			if(res==-1){
+		inode_start=gp[i].bg_inode_bitmap * bsize;
+		while(j <= sb->s_inodes_per_group){
+			if(!bitmask){
 				pread(file_fd, &tmp,1, inode_start++);
-				res=7;
+				bitmask = 1;
 			}
-			if((tmp & (1<<res))==0)
+			if((tmp & (1 << bitmask))==0)
 				printf("IFREE,%d\n",j);
 			j++;
-			res--;
+			bitmask <<= 1;
 		}
 	}
 }
 
-/*void indirect_summary(int Ninode) {
-	printf("INDIRECT,%d", Ninode);
-	int indirect = 
-}*/
+void dirent_summary(int Ninode) {
+	int start_d, k;
+	int length = 0, offset = 0;
+	struct ext2_dir_entry *dirent = malloc(sizeof(struct ext2_dir_entry));
+	for (k=0; k<12; k++){
+		start_d = bsize * inode.i_block[k];
+		while(offset < bsize) {
+			pread(file_fd, dirent, sizeof(struct ext2_dir_entry), start_d + offset);
+			if(!dirent->inode)
+				break;		
+			printf("DIRENT,%d,%d,%d,%d,%d,'%s'\n", Ninode, offset, dirent->inode,
+																			 			dirent->rec_len, dirent->name_len, 
+																			 			dirent->name);
+			offset += dirent->rec_len;
+		}	
+	}
+}
+
+int scan_block(int blocknum, int level, int Ninode) {
+	__u32 childblock;
+	int read_offset = bsize * blocknum;
+	int ret = 0;
+	switch (level) {
+		case 1: {
+			pread(file_fd, &childblock, sizeof(childblock), read_offset);
+			if (childblock > 0) ret = file_offset;
+			while (childblock) {
+				printf("INDIRECT,%d,%d,%d,%d,%d\n", Ninode, level, file_offset, blocknum, childblock);
+				file_offset++;
+				read_offset += sizeof(childblock);
+				pread(file_fd, &childblock, sizeof(childblock), read_offset);
+			}
+			return ret;
+		}
+		case 2: {
+			pread(file_fd, &childblock, sizeof(childblock), read_offset);
+			while (childblock) {
+				int res = scan_block(childblock, 1, Ninode);
+				if (ret == 0) ret = res;
+				printf("INDIRECT,%d,%d,%d,%d,%d\n", Ninode, level, res, blocknum, childblock);
+				read_offset += sizeof(childblock);
+				pread(file_fd, &childblock, sizeof(childblock), read_offset);
+			}
+			return ret;
+		}
+		case 3: {
+			pread(file_fd, &childblock, sizeof(childblock), read_offset);
+			while (childblock) {
+				int res = scan_block(childblock, 2, Ninode);
+				if (ret == 0) ret = res;
+				printf("INDIRECT,%d,%d,%d,%d,%d\n", Ninode, level, res, blocknum, childblock);
+				read_offset += sizeof(childblock);
+				pread(file_fd, &childblock, sizeof(childblock), read_offset);
+			}
+			return ret;
+		}
+	}
+}
+
+
+void indirect_summary(int Ninode) {
+	int indirect_block = inode.i_block[12];
+	int d_indirect_block = inode.i_block[13];
+	int t_indirect_block = inode.i_block[14];
+	if (indirect_block) scan_block(indirect_block, 1, Ninode);
+	if (d_indirect_block) scan_block(d_indirect_block, 2, Ninode);
+	if (t_indirect_block) scan_block(t_indirect_block, 3, Ninode);
+}
 
 void inode_summary() {
 	int i,j,k;
 	char file_type;
-	char* name=malloc(sizeof(char)*256);
+	char* name = malloc(sizeof(char) * 256);
 	struct tm* tm_tmp;
 	time_t t_tmp;
-	for(i=0;i<group_num;i++){
-		int start=bsize*(gp[i].bg_inode_table);
-		for(j=1;j<=sb->s_inodes_per_group;j++){
-			pread(file_fd,&inode,sizeof(inode),start);
-			start+=sizeof(inode);
+	int start;
+	for (i = 0; i < group_num; i++) {
+		start = bsize * gp[i].bg_inode_table;
+		for (j = 1;j <= sb->s_inodes_per_group; j++) {
+			pread(file_fd, &inode, sizeof(inode), start);
+			start += sizeof(inode);
 
 			//INODE
-			if(inode.i_mode && inode.i_links_count){
+			if (inode.i_mode && inode.i_links_count){
 
-				if(inode.i_mode & 0xA000) file_type = 's';
-				else if(inode.i_mode & 0x8000) file_type='f';
+				if (inode.i_mode & 0xA000) file_type = 's';
+				else if (inode.i_mode & 0x8000) file_type='f';
 				else if (inode.i_mode & 0x4000) file_type='d';
 				else file_type= '?';
 
 				printf("INODE,%d,%c,%o,%d,%d,%d,",
-						j,file_type,inode.i_mode,inode.i_uid,inode.i_gid,
+						j, file_type, inode.i_mode & 511, inode.i_uid, inode.i_gid,
 						inode.i_links_count);
 
 				//creation time
-				t_tmp=(time_t)inode.i_ctime;
-				tm_tmp=gmtime(&t_tmp);
-				printf("%02d/%02d/%2d %02d:%02d:%02d, GMT",
+				t_tmp = (time_t) inode.i_ctime;
+				tm_tmp = gmtime(&t_tmp);
+				printf("%02d/%02d/%2d %02d:%02d:%02d",
 						tm_tmp->tm_mon+1,tm_tmp->tm_mday,(tm_tmp->tm_year)%100,
 						tm_tmp->tm_hour,tm_tmp->tm_min,tm_tmp->tm_sec);
 				//modification time
 				t_tmp=(time_t)inode.i_mtime;
 				tm_tmp=gmtime(&t_tmp);
-				printf(",%02d/%02d/%2d %02d:%02d:%02d, GMT",
+				printf(",%02d/%02d/%2d %02d:%02d:%02d",
 						tm_tmp->tm_mon+1,tm_tmp->tm_mday,(tm_tmp->tm_year)%100,
 						tm_tmp->tm_hour,tm_tmp->tm_min,tm_tmp->tm_sec);
 				//time of last access
 				t_tmp=(time_t)inode.i_atime;
 				tm_tmp=gmtime(&t_tmp);
-				printf(",%02d/%02d/%2d %02d:%02d:%02d, GMT",
+				printf(",%02d/%02d/%2d %02d:%02d:%02d",
 						tm_tmp->tm_mon+1,tm_tmp->tm_mday,(tm_tmp->tm_year)%100,
 						tm_tmp->tm_hour,tm_tmp->tm_min,tm_tmp->tm_sec);
 
 
 				printf(",%d,%d",inode.i_size,inode.i_blocks);
-				for(k=0;k<15;k++)
+				for (k=0; k<15; k++)
 					printf(",%d",inode.i_block[k]);
 				printf("\n");
 
-				//DIRECT
-				if(file_type== 'd'){
-					int start_d, length=0, offset=0;
-					for(k=0;k<12;k++){
-						start_d=bsize*inode.i_block[k];
-						while(offset<1024){
-							pread(file_fd,&int32,4,start_d+offset);
-
-							/******when to terminate?*****/
-							if(int32==0) continue;		
-
-							printf("DIRECT,%d,%d,%d,",j,offset,int32);
-							//entry length
-							pread(file_fd,&int16,2,start_d+offset+4);
-							//name length
-							pread(file_fd,&int8,1,start_d+offset+6);						
-							printf("%d,%d,",int16,int8);
-							//name
-							pread(file_fd,name,int8,start_d+offset+8);
-							name[int8]='\0';
-							printf("%s\n",name);
-
-							offset+=int16;
-						}	
+				if ((file_type == 'd') || (file_type == 'f')) {
+					if (file_type == 'd') {
+						dirent_summary(j);
 					}
+					file_offset = 12;
+					indirect_summary(j);
 				}
 			}
 		}
