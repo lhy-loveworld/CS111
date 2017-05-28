@@ -37,20 +37,16 @@ void superblock_summary() {
 	printf("SUPERBLOCK,%d,%d,%d,%d,%d,%d,%d\n", sb->s_blocks_count,
 	 				sb->s_inodes_count, bsize, sb->s_inode_size,
 	  			sb->s_blocks_per_group, sb->s_inodes_per_group, sb->s_first_ino);
-	printf("%d\n", sb->s_block_group_nr);
 }
 
 void group_summary() {
 
-	//first block following the superblock
 	int group_start = bsize + SUPERBLOCK;
-	//not sure...
 	group_num = ceil((double) sb->s_blocks_count / (double) sb->s_blocks_per_group);
 	last_group = sb->s_blocks_count % sb->s_blocks_per_group;
 	int group_block_num = sb->s_blocks_per_group;
 	gp = malloc(sizeof(struct ext2_group_desc) * group_num);
 	
-	//assume that # of inodes/blocks in each group is the same?
 	int i;
 	for(i = 0; i < group_num; i++) {
 		if(i == group_num -1 && last_group !=0)
@@ -83,7 +79,7 @@ void bfree_summary() {
 				pread(file_fd, &tmp, 1, start++);
 				bitmask = 1;
 			}
-			if((tmp & bitmask) == 0)
+			if (!(tmp & bitmask))
 				printf("BFREE,%d\n", j);
 			j++;
 			bitmask <<= 1;
@@ -103,19 +99,19 @@ void ifree_summary() {
 		while(j <= sb->s_inodes_per_group){
 			if(!bitmask){
 				pread(file_fd, &tmp,1, inode_start++);
-				bitmask = 1;
+				bitmask = 128;
 			}
-			if((tmp & (1 << bitmask))==0)
+			if((tmp & bitmask)==0)
 				printf("IFREE,%d\n",j);
 			j++;
-			bitmask <<= 1;
+			bitmask >>= 1;
 		}
 	}
 }
 
 void dirent_summary(int Ninode) {
 	int start_d, k;
-	int length = 0, offset = 0;
+	int offset = 0;
 	struct ext2_dir_entry *dirent = malloc(sizeof(struct ext2_dir_entry));
 	for (k=0; k<12; k++){
 		start_d = bsize * inode.i_block[k];
@@ -135,40 +131,26 @@ int scan_block(int blocknum, int level, int Ninode) {
 	__u32 childblock;
 	int read_offset = bsize * blocknum;
 	int ret = 0;
-	switch (level) {
-		case 1: {
+	if (level == 1) {
+		pread(file_fd, &childblock, sizeof(childblock), read_offset);
+		if (childblock > 0) ret = file_offset;
+		while (childblock) {
+			printf("INDIRECT,%d,%d,%d,%d,%d\n", Ninode, level, file_offset, blocknum, childblock);
+			file_offset++;
+			read_offset += sizeof(childblock);
 			pread(file_fd, &childblock, sizeof(childblock), read_offset);
-			if (childblock > 0) ret = file_offset;
-			while (childblock) {
-				printf("INDIRECT,%d,%d,%d,%d,%d\n", Ninode, level, file_offset, blocknum, childblock);
-				file_offset++;
-				read_offset += sizeof(childblock);
-				pread(file_fd, &childblock, sizeof(childblock), read_offset);
-			}
-			return ret;
 		}
-		case 2: {
+		return ret;
+	} else {
+		pread(file_fd, &childblock, sizeof(childblock), read_offset);
+		while (childblock) {
+			int res = scan_block(childblock, level - 1, Ninode);
+			if (ret == 0) ret = res;
+			printf("INDIRECT,%d,%d,%d,%d,%d\n", Ninode, level, res, blocknum, childblock);
+			read_offset += sizeof(childblock);
 			pread(file_fd, &childblock, sizeof(childblock), read_offset);
-			while (childblock) {
-				int res = scan_block(childblock, 1, Ninode);
-				if (ret == 0) ret = res;
-				printf("INDIRECT,%d,%d,%d,%d,%d\n", Ninode, level, res, blocknum, childblock);
-				read_offset += sizeof(childblock);
-				pread(file_fd, &childblock, sizeof(childblock), read_offset);
-			}
-			return ret;
 		}
-		case 3: {
-			pread(file_fd, &childblock, sizeof(childblock), read_offset);
-			while (childblock) {
-				int res = scan_block(childblock, 2, Ninode);
-				if (ret == 0) ret = res;
-				printf("INDIRECT,%d,%d,%d,%d,%d\n", Ninode, level, res, blocknum, childblock);
-				read_offset += sizeof(childblock);
-				pread(file_fd, &childblock, sizeof(childblock), read_offset);
-			}
-			return ret;
-		}
+		return ret;
 	}
 }
 
@@ -185,7 +167,6 @@ void indirect_summary(int Ninode) {
 void inode_summary() {
 	int i,j,k;
 	char file_type;
-	char* name = malloc(sizeof(char) * 256);
 	struct tm* tm_tmp;
 	time_t t_tmp;
 	int start;
@@ -198,11 +179,11 @@ void inode_summary() {
 			//INODE
 			if (inode.i_mode && inode.i_links_count){
 
-				if (inode.i_mode & 0xA000) file_type = 's';
-				else if (inode.i_mode & 0x8000) file_type='f';
-				else if (inode.i_mode & 0x4000) file_type='d';
+				if ((inode.i_mode >> 12) == 0xA) file_type = 's';
+				else if ((inode.i_mode >> 12) == 0x8) file_type ='f';
+				else if ((inode.i_mode >> 12) == 0x4) file_type ='d';
 				else file_type= '?';
-
+				//printf("rrrrrrrrrrrr%d\n", inode.i_mode & 0x8000);
 				printf("INODE,%d,%c,%o,%d,%d,%d,",
 						j, file_type, inode.i_mode & 511, inode.i_uid, inode.i_gid,
 						inode.i_links_count);
