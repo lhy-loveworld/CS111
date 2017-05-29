@@ -35,10 +35,7 @@ void Pread(int fd, void *buf, size_t count, off_t offset) {
 
 void superblock_summary() {
 	sb = malloc(sizeof(struct ext2_super_block));
-	if (pread(file_fd, sb, sizeof(struct ext2_super_block), 1024) < 0) {
-		fprintf(stderr, "pread() failed: %s\n", strerror(errno));
-		exit(2);
-	}
+	Pread(file_fd, sb, sizeof(struct ext2_super_block), 1024);
 	bsize = EXT2_MIN_BLOCK_SIZE << sb->s_log_block_size;
 	printf("SUPERBLOCK,%d,%d,%d,%d,%d,%d,%d\n", sb->s_blocks_count,
 	 				sb->s_inodes_count, bsize, sb->s_inode_size,
@@ -82,7 +79,7 @@ void bfree_summary() {
 		blocknum = (i < group_num - 1) ? sb->s_inodes_per_group : last_group;
 		while(j <= blocknum) {	
 			if(!bitmask){
-				pread(file_fd, &tmp, 1, start++);
+				Pread(file_fd, &tmp, 1, start++);
 				bitmask = 1;
 			}
 			if (!(tmp & bitmask))
@@ -93,7 +90,7 @@ void bfree_summary() {
 	}
 }
 
-/*void ifree_summary() {
+void ifree_summary() {
 	int i;
 	int j = 1;
 	int inode_start;
@@ -104,33 +101,13 @@ void bfree_summary() {
 		inode_start=gp[i].bg_inode_bitmap * bsize;
 		while(j <= sb->s_inodes_per_group){
 			if(!bitmask){
-				pread(file_fd, &tmp,1, inode_start++);
-				bitmask = 128;
+				Pread(file_fd, &tmp,1, inode_start++);
+				bitmask = 1;
 			}
 			if((tmp & bitmask)==0)
 				printf("IFREE,%d\n",j);
 			j++;
-			bitmask >>= 1;
-		}
-	}
-}*/
-void ifree_summary() {
-	int i,j=1;
-	int inode_start;
-	int res=8;
-	__u8 int8;
-
-	for(i=0;i<group_num;i++){
-		inode_start=gp[i].bg_inode_bitmap*bsize;
-		while(j<=sb->s_inodes_per_group){
-			if(res==8){
-				pread(file_fd,&int8,1,inode_start++);
-				res=0;
-			}
-			if((int8&(1<<res))==0)
-				printf("IFREE,%d\n",j);
-			j++;
-			res++;
+			bitmask <<= 1;
 		}
 	}
 }
@@ -142,7 +119,7 @@ void dirent_summary(int Ninode) {
 	for (k=0; k<12; k++){
 		start_d = bsize * inode.i_block[k];
 		while(offset < bsize) {
-			pread(file_fd, dirent, sizeof(struct ext2_dir_entry), start_d + offset);
+			Pread(file_fd, dirent, sizeof(struct ext2_dir_entry), start_d + offset);
 			if(!dirent->inode)
 				break;		
 			printf("DIRENT,%d,%d,%d,%d,%d,'%s'\n", Ninode, offset, dirent->inode,
@@ -158,24 +135,24 @@ int scan_block(int blocknum, int level, int Ninode) {
 	int read_offset = bsize * blocknum;
 	int ret = 0;
 	if (level == 1) {
-		pread(file_fd, &childblock, sizeof(childblock), read_offset);
+		Pread(file_fd, &childblock, sizeof(childblock), read_offset);
 		if (childblock > 0) ret = file_offset;
 		else printf("%d: no childblock\n", blocknum);
 		while (childblock) {
 			printf("INDIRECT,%d,%d,%d,%d,%d\n", Ninode, level, file_offset, blocknum, childblock);
 			file_offset++;
 			read_offset += sizeof(childblock);
-			pread(file_fd, &childblock, sizeof(childblock), read_offset);
+			Pread(file_fd, &childblock, sizeof(childblock), read_offset);
 		}
 		return ret;
 	} else {
-		pread(file_fd, &childblock, sizeof(childblock), read_offset);
+		Pread(file_fd, &childblock, sizeof(childblock), read_offset);
 		while (childblock) {
 			int res = scan_block(childblock, level - 1, Ninode);
 			if (ret == 0) ret = res;
 			printf("INDIRECT,%d,%d,%d,%d,%d\n", Ninode, level, res, blocknum, childblock);
 			read_offset += sizeof(childblock);
-			pread(file_fd, &childblock, sizeof(childblock), read_offset);
+			Pread(file_fd, &childblock, sizeof(childblock), read_offset);
 		}
 		return ret;
 	}
@@ -200,7 +177,7 @@ void inode_summary() {
 	for (i = 0; i < group_num; i++) {
 		start = bsize * gp[i].bg_inode_table;
 		for (j = 1;j <= sb->s_inodes_per_group; j++) {
-			pread(file_fd, &inode, sizeof(inode), start);
+			Pread(file_fd, &inode, sizeof(inode), start);
 			start += sizeof(inode);
 
 			//INODE
