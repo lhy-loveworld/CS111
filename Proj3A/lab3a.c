@@ -119,9 +119,11 @@ void dirent_summary(int Ninode) {
 	for (k=0; k<12; k++){
 		start_d = bsize * inode.i_block[k];
 		while(offset < bsize) {
+			bzero(dirent, sizeof(struct ext2_dir_entry));
 			Pread(file_fd, dirent, sizeof(struct ext2_dir_entry), start_d + offset);
 			if(!dirent->inode)
-				break;		
+				break;
+			dirent->name[dirent->name_len] = '\0';		
 			printf("DIRENT,%d,%d,%d,%d,%d,'%s'\n", Ninode, offset, dirent->inode,
 																			 			dirent->rec_len, dirent->name_len, 
 																			 			dirent->name);
@@ -137,7 +139,6 @@ int scan_block(int blocknum, int level, int Ninode) {
 	if (level == 1) {
 		Pread(file_fd, &childblock, sizeof(childblock), read_offset);
 		if (childblock > 0) ret = file_offset;
-		else printf("%d: no childblock\n", blocknum);
 		while (childblock) {
 			printf("INDIRECT,%d,%d,%d,%d,%d\n", Ninode, level, file_offset, blocknum, childblock);
 			file_offset++;
