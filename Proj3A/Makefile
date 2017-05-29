@@ -1,12 +1,11 @@
 #NAME: Hongyang Li, Zhenli Jiang
-#EMAIL: hyli@g.ucla.edu
-#ID: 304759850
+#EMAIL: hyli@g.ucla.edu, jenny921111@gmail.com
+#ID: 304759850, 304878235
 CC = gcc
 CFLAGS  = -g -Wall -lm
 sources = Makefile $(TARGET).c README ext2_fs.h
 TARGET = lab3a
 UID = 304759850
-platform = $(shell uname -r | grep 'edison')
 
 all: build
 
