@@ -17,7 +17,6 @@
 #define GROUP_TABLE_SIZE 32
 
 int file_fd;
-int write_fd;
 int bsize;
 int group_num;
 int last_group;
@@ -26,6 +25,13 @@ int file_offset;
 struct ext2_super_block *sb;
 struct ext2_group_desc *gp;
 struct ext2_inode inode;
+
+void Pread(int fd, void *buf, size_t count, off_t offset) {
+	if (pread(fd, buf, count, offset) < 0) {
+		fprintf(stderr, "pread() failed: %s\n", strerror(errno));
+		exit(2);
+	}
+}
 
 void superblock_summary() {
 	sb = malloc(sizeof(struct ext2_super_block));
@@ -52,7 +58,7 @@ void group_summary() {
 		if(i == group_num -1 && last_group !=0)
 			group_block_num = last_group;
 
-		pread(file_fd, &gp[i], GROUP_TABLE_SIZE, group_start);
+		Pread(file_fd, &gp[i], GROUP_TABLE_SIZE, group_start);
 		printf("GROUP,%d,%d,%d,%d,%d,%d,%d,%d\n",
 				i, group_block_num, sb->s_inodes_per_group,
 				gp[i].bg_free_blocks_count, gp[i].bg_free_inodes_count,
@@ -87,7 +93,7 @@ void bfree_summary() {
 	}
 }
 
-void ifree_summary() {
+/*void ifree_summary() {
 	int i;
 	int j = 1;
 	int inode_start;
@@ -105,6 +111,26 @@ void ifree_summary() {
 				printf("IFREE,%d\n",j);
 			j++;
 			bitmask >>= 1;
+		}
+	}
+}*/
+void ifree_summary() {
+	int i,j=1;
+	int inode_start;
+	int res=8;
+	__u8 int8;
+
+	for(i=0;i<group_num;i++){
+		inode_start=gp[i].bg_inode_bitmap*bsize;
+		while(j<=sb->s_inodes_per_group){
+			if(res==8){
+				pread(file_fd,&int8,1,inode_start++);
+				res=0;
+			}
+			if((int8&(1<<res))==0)
+				printf("IFREE,%d\n",j);
+			j++;
+			res++;
 		}
 	}
 }
@@ -134,6 +160,7 @@ int scan_block(int blocknum, int level, int Ninode) {
 	if (level == 1) {
 		pread(file_fd, &childblock, sizeof(childblock), read_offset);
 		if (childblock > 0) ret = file_offset;
+		else printf("%d: no childblock\n", blocknum);
 		while (childblock) {
 			printf("INDIRECT,%d,%d,%d,%d,%d\n", Ninode, level, file_offset, blocknum, childblock);
 			file_offset++;
@@ -244,8 +271,10 @@ int main(int argc, char **argv){
 	bfree_summary();
 	ifree_summary();
 	inode_summary();
+
 	if (close(file_fd) < 0) {
 		fprintf(stderr, "close() failed: %s\n", strerror(errno));
 		exit(2);
 	}
+	return 0;
 }
