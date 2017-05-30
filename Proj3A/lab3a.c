@@ -141,15 +141,17 @@ int scan_direntry(int blocknum, char type, int inode_N) {
 		struct ext2_dir_entry *dirent = malloc(sizeof(struct ext2_dir_entry));
 		while(offset < bsize) {
 			Pread(file_fd, dirent, sizeof(struct ext2_dir_entry), start_d + offset);
-			offset += dirent->rec_len;
-			if(!dirent->inode)
+			if (!dirent->inode) {
+				offset += dirent->rec_len;
 				continue;
+			}
 			dirent->name[dirent->name_len] = '\0';		
 			printf("DIRENT,%d,%d,%d,%d,%d,'%s'\n", inode_N, offset, 
 																						dirent->inode,
 																						dirent->rec_len, 
 																						dirent->name_len, 
 																						dirent->name);
+			offset += dirent->rec_len;
 		}
 	}
 	return file_offset;
