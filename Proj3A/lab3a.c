@@ -122,7 +122,7 @@ void dirent_summary(int Ninode) {
 			bzero(dirent, sizeof(struct ext2_dir_entry));
 			Pread(file_fd, dirent, sizeof(struct ext2_dir_entry), start_d + offset);
 			if(!dirent->inode)
-				break;
+				continue;
 			dirent->name[dirent->name_len] = '\0';		
 			printf("DIRENT,%d,%d,%d,%d,%d,'%s'\n", Ninode, offset, dirent->inode,
 																			 			dirent->rec_len, dirent->name_len, 
