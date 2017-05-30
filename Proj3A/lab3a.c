@@ -121,18 +121,41 @@ void dirent_summary(int Ninode) {
 		while(offset < bsize) {
 			bzero(dirent, sizeof(struct ext2_dir_entry));
 			Pread(file_fd, dirent, sizeof(struct ext2_dir_entry), start_d + offset);
+			offset += dirent->rec_len;
 			if(!dirent->inode)
 				continue;
 			dirent->name[dirent->name_len] = '\0';		
-			printf("DIRENT,%d,%d,%d,%d,%d,'%s'\n", Ninode, offset, dirent->inode,
-																			 			dirent->rec_len, dirent->name_len, 
-																			 			dirent->name);
-			offset += dirent->rec_len;
+			printf("DIRENT,%d,%d,%d,%d,%d,'%s'\n", Ninode, offset, 
+													dirent->inode,
+													dirent->rec_len, 
+													dirent->name_len, 
+													dirent->name);
 		}	
 	}
 }
 
-int scan_block(int blocknum, int level, int Ninode) {
+int scan_direntry(int blocknum, char type, int inode_N) {
+	file_offset++;
+	if (type == 'd') {
+		int start_d = bsize * blocknum, offset = 0;
+		struct ext2_dir_entry *dirent = malloc(sizeof(struct ext2_dir_entry));
+		while(offset < bsize) {
+			Pread(file_fd, dirent, sizeof(struct ext2_dir_entry), start_d + offset);
+			offset += dirent->rec_len;
+			if(!dirent->inode)
+				continue;
+			dirent->name[dirent->name_len] = '\0';		
+			printf("DIRENT,%d,%d,%d,%d,%d,'%s'\n", inode_N, offset, 
+																						dirent->inode,
+																						dirent->rec_len, 
+																						dirent->name_len, 
+																						dirent->name);
+		}
+	}
+	return file_offset;
+}
+
+int scan_indirect(int blocknum, int level, int inode_N, char type) {
 	__u32 childblock;
 	int read_offset = bsize * blocknum;
 	int ret = 0;
@@ -143,14 +166,14 @@ int scan_block(int blocknum, int level, int Ninode) {
 		Pread(file_fd, &childblock, sizeof(childblock), read_offset);//
 		if (childblock) {//
 			if (level == 1) {
-				f_o = ++file_offset;
+				f_o = scan_direntry(childblock, type, inode_N);
 			} else {
-				f_o = scan_block(childblock, level - 1, Ninode);
+				f_o = scan_indirect(childblock, level - 1, inode_N, type);
 			}
 			if (!ret) {
 				ret = f_o;
 			}
-			printf("INDIRECT,%d,%d,%d,%d,%d\n", Ninode, level, f_o, blocknum, childblock);
+			printf("INDIRECT,%d,%d,%d,%d,%d\n", inode_N, level, f_o, blocknum, childblock);
 		}//
 		//Pread(file_fd, &childblock, sizeof(childblock), read_offset);
 		read_offset += sizeof(childblock);
@@ -159,14 +182,14 @@ int scan_block(int blocknum, int level, int Ninode) {
 }
 
 
-void indirect_summary(int Ninode) {
+/*void indirect_summary(int Ninode) {
 	int indirect_block = inode.i_block[12];
 	int d_indirect_block = inode.i_block[13];
 	int t_indirect_block = inode.i_block[14];
 	if (indirect_block) scan_block(indirect_block, 1, Ninode);
 	if (d_indirect_block) scan_block(d_indirect_block, 2, Ninode);
 	if (t_indirect_block) scan_block(t_indirect_block, 3, Ninode);
-}
+}*/
 
 void inode_summary() {
 	int i,j,k;
@@ -218,11 +241,17 @@ void inode_summary() {
 				printf("\n");
 
 				if ((file_type == 'd') || (file_type == 'f')) {
-					if (file_type == 'd') {
-						dirent_summary(j);
+					file_offset = -1;
+					for (k = 0; k < 12; ++k) {
+						if (inode.i_block[k]) {
+							scan_direntry(inode.i_block[k], file_type, j);
+						}
 					}
-					file_offset = 11;
-					indirect_summary(j);
+					for (k = 12; k < 15; ++k) {
+						if (inode.i_block[k]) {
+							scan_indirect(inode.i_block[k], k - 11, j, file_type);
+						}
+					}
 				}
 			}
 		}
