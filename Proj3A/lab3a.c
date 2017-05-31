@@ -37,9 +37,9 @@ void superblock_summary() {
 	sb = malloc(sizeof(struct ext2_super_block));
 	Pread(file_fd, sb, sizeof(struct ext2_super_block), 1024);
 	bsize = EXT2_MIN_BLOCK_SIZE << sb->s_log_block_size;
-	printf("SUPERBLOCK,%d,%d,%d,%d,%d,%d,%d\n", sb->s_blocks_count,
-	 				sb->s_inodes_count, bsize, sb->s_inode_size,
-	  			sb->s_blocks_per_group, sb->s_inodes_per_group, sb->s_first_ino);
+	printf("SUPERBLOCK,%d,%d,%d,%d,%d,%d,%d\n", sb->s_blocks_count, sb->s_inodes_count, bsize, 
+																							sb->s_inode_size, sb->s_blocks_per_group, 
+																						 	sb->s_inodes_per_group, sb->s_first_ino);
 }
 
 void group_summary() {
@@ -112,27 +112,6 @@ void ifree_summary() {
 	}
 }
 
-void dirent_summary(int Ninode) {
-	int start_d, k;
-	int offset = 0;
-	struct ext2_dir_entry *dirent = malloc(sizeof(struct ext2_dir_entry));
-	for (k=0; k<12; k++){
-		start_d = bsize * inode.i_block[k];
-		while(offset < bsize) {
-			bzero(dirent, sizeof(struct ext2_dir_entry));
-			Pread(file_fd, dirent, sizeof(struct ext2_dir_entry), start_d + offset);
-			offset += dirent->rec_len;
-			if(!dirent->inode)
-				continue;
-			dirent->name[dirent->name_len] = '\0';		
-			printf("DIRENT,%d,%d,%d,%d,%d,'%s'\n", Ninode, offset, 
-													dirent->inode,
-													dirent->rec_len, 
-													dirent->name_len, 
-													dirent->name);
-		}	
-	}
-}
 
 int scan_direntry(int blocknum, char type, int inode_N) {
 	file_offset++;
@@ -146,7 +125,7 @@ int scan_direntry(int blocknum, char type, int inode_N) {
 				continue;
 			}
 			dirent->name[dirent->name_len] = '\0';		
-			printf("DIRENT,%d,%d,%d,%d,%d,'%s'\n", inode_N, offset, 
+			printf("DIRENT,%d,%d,%d,%d,%d,'%s'\n", inode_N, offset + bsize * file_offset, 
 																						dirent->inode,
 																						dirent->rec_len, 
 																						dirent->name_len, 
@@ -184,15 +163,6 @@ int scan_indirect(int blocknum, int level, int inode_N, char type) {
 }
 
 
-/*void indirect_summary(int Ninode) {
-	int indirect_block = inode.i_block[12];
-	int d_indirect_block = inode.i_block[13];
-	int t_indirect_block = inode.i_block[14];
-	if (indirect_block) scan_block(indirect_block, 1, Ninode);
-	if (d_indirect_block) scan_block(d_indirect_block, 2, Ninode);
-	if (t_indirect_block) scan_block(t_indirect_block, 3, Ninode);
-}*/
-
 void inode_summary() {
 	int i,j,k;
 	char file_type;
@@ -212,7 +182,6 @@ void inode_summary() {
 				else if ((inode.i_mode >> 12) == 0x8) file_type ='f';
 				else if ((inode.i_mode >> 12) == 0x4) file_type ='d';
 				else file_type= '?';
-				//printf("rrrrrrrrrrrr%d\n", inode.i_mode & 0x8000);
 				printf("INODE,%d,%c,%o,%d,%d,%d,",
 						j, file_type, inode.i_mode & 511, inode.i_uid, inode.i_gid,
 						inode.i_links_count);
@@ -263,7 +232,7 @@ void inode_summary() {
 
 int main(int argc, char **argv){
 	if(argc<2){
-		fprintf(stderr, "Error: number of argument.\n");
+		fprintf(stderr, "Error: number of arguments.\n");
 		exit(1);
 	}
 
