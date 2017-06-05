@@ -8,10 +8,10 @@ UID = 304759850
 all: build
 
 build:
-	 cp $(TARGET).py $(TARGET)
+	 python -m py_compile $(TARGET).py
 
 clean:
-	 $(RM) $(TARGET)
+	 $(RM) $(TARGET).pyc
 	 
 dist:
 	 tar -czf $(TARGET)-$(UID).tar.gz $(sources)
