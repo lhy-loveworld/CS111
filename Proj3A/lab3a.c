@@ -80,7 +80,7 @@ void bfree_summary() {
 		blocknum = (i < group_num - 1) ? sb->s_inodes_per_group : last_group;
 		group_block_start = sb->s_blocks_per_group * i;
 		j = (i == 0) ? group_block_start + sb->s_first_data_block : group_block_start;
-		while(j <= blocknum + group_block_start) {	
+		while(j < blocknum + group_block_start) {	
 			if(!bitmask){
 				Pread(file_fd, &tmp, 1, start++);
 				bitmask = 1;
