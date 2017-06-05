@@ -24,28 +24,33 @@ def block_name(i):
 	return name
 
 def check_block_num(block_num, b_name, offset, inode_N):
-
+	global rc
 	b_n = block_name(b_name)
 
-	if ( block_num < 0 or block_num > TOTAL_BLOCKS):
+	if ( block_num < 0 or block_num >= TOTAL_BLOCKS):
+		rc = 2
 		print "INVALID {}BLOCK {} IN INODE {} AT OFFSET {}".format(b_n,block_num,inode_N,offset)
 	elif (block_num > 0):
 		#????????
 		if (block_num < first_nonrsv_block):
+			rc = 2
 			print "RESERVED {}BLOCK {} IN INODE {} AT OFFSET {}".format(b_n,block_num,inode_N,offset)
 		
 		# check duplicates.
 		if (blocks[block_num][0] == -1 or blocks[block_num][0] == 0):
 			if (blocks[block_num][0] == 0):
+				rc = 2
 				print "ALLOCATED BLOCK {} ON FREELIST".format(block_num)
 			blocks[block_num][0] = inode_N
 			blocks[block_num][1] = b_name
 			blocks[block_num][2] = offset
 		elif (blocks[block_num][0] > 0):
+			rc = 2
 			print "DUPLICATE {}BLOCK {} IN INODE {} AT OFFSET {}".format(block_name(blocks[block_num][1]), block_num,blocks[block_num][0],blocks[block_num][2])
 			print "DUPLICATE {}BLOCK {} IN INODE {} AT OFFSET {}".format(b_n, block_num,inode_N,offset)
 			blocks[block_num][0] = -2
 		elif (blocks[block_num][0] == -2):
+			rc = 2
 			print "DUPLICATE {}BLOCK {} IN INODE {} AT OFFSET {}".format(b_n, block_num,inode_N,offset)
 		
 
@@ -76,7 +81,6 @@ def read_ifree(inode_N):
 	inodes[inode_N - 1][0] = 0
 
 def read_inode(line):
-	#global inodes
 	global rc
 	inode_N = int(line[1])
 	if (int(line[3]) != 0):
@@ -128,12 +132,13 @@ def read_dirent(line):
 def read_indirect(line):
 	block_num = int(line[5])
 	offset = int(line[3])
-	b_n = int(line[2])+11
+	b_n = int(line[2])+10
 	check_block_num(block_num, b_n, offset,int(line[1]))
 
 
 
 def scan_blocks():
+	global rc
 	for i in range(first_nonrsv_block, TOTAL_BLOCKS):
 		if (blocks[i][0] == -1):
 			print "UNREFERENCED BLOCK {}".format(i)
@@ -207,8 +212,6 @@ def main():
 	for line in ID:
 		read_indirect(line)
 	scan_blocks()
-	#print(TOTAL_BLOCKS, TOTAL_INODES, INODE_BLOCKS, len(blocks), len(inodes), first_nonrsv_block, first_nonrsv_inode)
-	#
 	sys.exit(rc)
 
 main()
