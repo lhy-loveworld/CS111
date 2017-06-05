@@ -68,8 +68,9 @@ void group_summary() {
 
 void bfree_summary() {
 	int i;
-	int j = 1;
+	int j;
 	int start;
+	int group_block_start;
 	__u8 bitmask = 0;
 	__u8 tmp;
 	int blocknum;
@@ -77,7 +78,9 @@ void bfree_summary() {
 	for(i=0; i < group_num; i++){
 		start = gp[i].bg_block_bitmap * bsize;
 		blocknum = (i < group_num - 1) ? sb->s_inodes_per_group : last_group;
-		while(j <= blocknum) {	
+		group_block_start = sb->s_blocks_per_group * i;
+		j = (i == 0) ? group_block_start + sb->s_first_data_block : group_block_start;
+		while(j <= blocknum + group_block_start) {	
 			if(!bitmask){
 				Pread(file_fd, &tmp, 1, start++);
 				bitmask = 1;
