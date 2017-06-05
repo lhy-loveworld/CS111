@@ -231,7 +231,7 @@ void inode_summary() {
 }
 
 int main(int argc, char **argv){
-	if(argc<2){
+	if(argc != 2){
 		fprintf(stderr, "Error: number of arguments.\n");
 		exit(1);
 	}
