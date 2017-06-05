@@ -67,7 +67,7 @@ def read_superblock(line):
 	TOTAL_INODES = int(line[2])
 	INODE_BLOCKS = int(math.ceil(float(TOTAL_INODES) / (int(line[3]) / int(line[4]))))
 	first_nonrsv_inode = int(line[7])
-	blocks = [[-1 for col in range(3)]for row in range(TOTAL_BLOCKS+1)] 
+	blocks = [[-1 for col in range(3)]for row in range(TOTAL_BLOCKS)] 
 	inodes = [[-2, 0, 0] for _ in range(0, first_nonrsv_inode)] + [[-1, 0, 0] for _ in range(first_nonrsv_inode, TOTAL_INODES)]
 
 def read_group(line):
