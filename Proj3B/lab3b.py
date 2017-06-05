@@ -20,7 +20,7 @@ def block_name(i):
 	elif (i == 13):
 		name = "DOUBLE INDIRECT "
 	elif (i == 14):
-		name = "TRIBLE INDIRECT "
+		name = "TRIPPLE INDIRECT "
 	return name
 
 def check_block_num(block_num, b_name, offset, inode_N):
@@ -42,11 +42,11 @@ def check_block_num(block_num, b_name, offset, inode_N):
 			blocks[block_num][1] = b_name
 			blocks[block_num][2] = offset
 		elif (blocks[block_num][0] > 0):
-			print "DUPLICATE {}BLOCK {} IN INODE {} AT OFFSET {}".format(block_name(blocks[block_num][1]),block_num,blocks[block_num][0],blocks[block_num][2])
-			print "DUPLICATE {}BLOCK {} IN INODE {} AT OFFSET {}".format(b_n,block_num,blocks[block_num][0],offset)
+			print "DUPLICATE BLOCK {} IN INODE {} AT OFFSET {}".format(block_num,blocks[block_num][0],blocks[block_num][2])
+			print "DUPLICATE BLOCK {} IN INODE {} AT OFFSET {}".format(block_num,inode_N,offset)
 			blocks[block_num][0] = -2
 		elif (blocks[block_num][0] == -2):
-			print "DUPLICATE {}BLOCK {} IN INODE {} AT OFFSET {}".format(b_n,block_num,blocks[block_num][0],offset)
+			print "DUPLICATE BLOCK {} IN INODE {} AT OFFSET {}".format(block_num,inode_N,offset)
 		
 
 
