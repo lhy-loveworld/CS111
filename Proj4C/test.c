@@ -9,8 +9,6 @@
 #include <string.h>
 #include <poll.h>
 #include <signal.h>
-#include <openssl/applink.c>
-#include <openssl/bio.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
