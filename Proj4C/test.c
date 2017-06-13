@@ -9,45 +9,50 @@
 #include <string.h>
 #include <poll.h>
 #include <signal.h>
+#include <openssl/applink.c>
+#include <openssl/bio.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+
+char* id = "123456777";
+
+int tcp_build(char* host, int port) {
+	struct sockaddr_in serv_addr;
+  struct hostent *server;
+  int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+  
+  if (sockfd < 0) {
+    fprintf(stderr, "ERROR opening socket: %s\n", strerror(errno));
+    exit(1);
+  }
+
+  server = gethostbyname(host);
+  if (server == NULL) {
+    fprintf(stderr,"ERROR, no such host\n");
+    exit(1);
+  }
+
+  bzero((char *) &serv_addr, sizeof(serv_addr));
+  serv_addr.sin_family = AF_INET;
+  bcopy((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
+  serv_addr.sin_port = htons(port);
+  if (connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0) {
+    fprintf(stderr, "ERROR connecting: %s\n", strerror(errno));
+    exit(1);
+  }
+
+  dprintf(sockfd, "ID=%s\n", id);
+  return sockfd;
+}
 
 int main(int argc, char *argv[]) {
 
-	static struct option args[] = {
-    {"id", 1, NULL, 'i'},
-    {"log", 1, NULL, 'l'},
-    {0, 0, 0, 0}
-  };
+	char* host = "lever.cs.ucla.edu";
+	int portno = 19000;
 
+	SSL_CTX *ctx;
+ 	SSL *ssl;
+ 	int sockfd = tcp_build(host, portno);
 
-  int arg_get;
-  char* id;
-  char* log;
-
-  while ((arg_get = getopt_long(argc, argv, "", args, NULL)) != -1) {
-    switch(arg_get) {
-      case 'i': {
-      	/*id = malloc((strlen(optarg) + 1));
-        strcpy(id, optarg);
-        id[strlen(optarg)] = '\0';*/
-        id = optarg;
-        break;
-      }
-      case 'l': {
-      	log = optarg;
-      	break;
-      }
-      default: {
-        printf("Please enter correct commands as shown below!\n");
-        printf("  --period=# ... specify a sampling interval in seconds\n");
-        printf("  --scale=C/F ... temperatures reported in Celsius or Fahrenheit\n");
-        printf("  --log=pathname ... append report to a logfile\n");
-        fprintf(stderr, "unrecognized argument\n");
-        exit(1);
-      }
-    }
-  }
-
-  printf("%s\n", id);
-  printf("%s\n", log);
   return 0;
 }
