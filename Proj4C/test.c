@@ -1,3 +1,5 @@
+#include <openssl/ssl.h>
+#include <openssl/err.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <fcntl.h>
@@ -9,8 +11,9 @@
 #include <string.h>
 #include <poll.h>
 #include <signal.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
+#include <math.h>
+#include <netinet/in.h>
+#include <netdb.h>
 
 char* id = "123456777";
 
