@@ -46,6 +46,22 @@ int tcp_build(char* host, int port) {
   return sockfd;
 }
 
+SSL_CTX* InitCTX(void)
+{   SSL_METHOD *method;
+    SSL_CTX *ctx;
+
+    OpenSSL_add_all_algorithms();		/* Load cryptos, et.al. */
+    SSL_load_error_strings();			/* Bring in and register error messages */
+    method = SSLv2_client_method();		/* Create new client-method instance */
+    ctx = SSL_CTX_new(method);			/* Create new context */
+    if ( ctx == NULL )
+    {
+        ERR_print_errors_fp(stderr);
+        abort();
+    }
+    return ctx;
+}
+
 int main(int argc, char *argv[]) {
 
 	char* host = "lever.cs.ucla.edu";
@@ -54,6 +70,8 @@ int main(int argc, char *argv[]) {
 	SSL_CTX *ctx;
  	SSL *ssl;
  	int sockfd = tcp_build(host, portno);
-
+ 	ctx = InitCTX();
+ 	ssl = SSL_new(ctx);						/* create new SSL connection state */
+  SSL_set_fd(ssl, sockfd);
   return 0;
 }
