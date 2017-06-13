@@ -24,7 +24,7 @@ int scale_flag = 0;
 int stop_flag = 0;
 int sample = -1;
 int period = 1;
-char* id;
+char* id = "123456777";
 
 const int B = 4275;
 const int R0 = 100000;
@@ -125,7 +125,7 @@ int main(int argc, char *argv[]) {
 
 
   int arg_get;
-  char* host;
+  char* host = "lever.cs.ucla.edu";
   int portno = atoi(argv[argc - 1]);
   int tls_flag = 0;
 
@@ -183,7 +183,6 @@ int main(int argc, char *argv[]) {
       exit(1);
     } else {
       if (ret_poll == 1) {
-        Check_tmp(sockfd);
         if (pfd[0].revents & POLLIN) {
         	bzero(buffer, 20);
           fgets(buffer, 20, sock_str);
@@ -216,6 +215,7 @@ int main(int argc, char *argv[]) {
           		}
           	}
           }
+          Check_tmp(sockfd);
         }
         if (pfd[0].revents & POLLERR) {
         	fprintf(stderr, "read() failed: %s\n", strerror(errno));
