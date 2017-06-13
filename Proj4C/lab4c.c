@@ -60,7 +60,7 @@ int tcp_build(char* host, int port) {
   return sockfd;
 }
 
-void Shutdown() {
+void Shutdown(int sockfd) {
 	time_t rawtime;
   struct tm *info;
   char time_str[9];
@@ -68,7 +68,7 @@ void Shutdown() {
 	time(&rawtime);
   info = localtime(&rawtime);
   strftime(time_str, 9, "%H:%M:%S", info);
-  dprintf(log_fd, "%s SHUTDOWN\n", time_str);
+  dprintf(sockfd, "%s SHUTDOWN\n", time_str);
   if (log_flag) {
     dprintf(log_fd, "%s SHUTDOWN\n", time_str);
   }
@@ -190,7 +190,7 @@ int main(int argc, char *argv[]) {
           fgets(buffer, 20, sock_str);
           if (!strcmp(buffer, "OFF\n")) {
           	if (log_flag) dprintf(log_fd, "%s", buffer);
-          	Shutdown();
+          	Shutdown(sockfd);
           } else {
           	if (!strcmp(buffer, "STOP\n")) {
           		if (log_flag) dprintf(log_fd, "%s", buffer);
