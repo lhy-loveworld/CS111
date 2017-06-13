@@ -24,6 +24,7 @@ int scale_flag = 0;
 int stop_flag = 0;
 int sample = -1;
 int period = 1;
+char* id;
 
 const int B = 4275;
 const int R0 = 100000;
@@ -124,7 +125,6 @@ int main(int argc, char *argv[]) {
 
 
   int arg_get;
-  char* id;
   char* host;
   int portno = atoi(argv[argc - 1]);
   int tls_flag = 0;
@@ -161,6 +161,7 @@ int main(int argc, char *argv[]) {
   int sockfd;
   if (!tls_flag)
   	sockfd = tcp_build(host, portno);
+  FILE *sock_str = fdopen(sockfd, "r");
   
   tmp = mraa_aio_init(0);
   if (tmp == NULL) {
@@ -185,7 +186,7 @@ int main(int argc, char *argv[]) {
         Check_tmp(sockfd);
         if (pfd[0].revents & POLLIN) {
         	bzero(buffer, 20);
-          fgets(buffer, 20, sockfd);
+          fgets(buffer, 20, sock_str);
           if (!strcmp(buffer, "OFF\n")) {
           	if (log_flag) dprintf(log_fd, "%s", buffer);
           	Shutdown();
