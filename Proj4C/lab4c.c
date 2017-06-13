@@ -127,6 +127,10 @@ int main(int argc, char *argv[]) {
   char* id;
   char* host;
   int portno = atoi(argv[argc - 1]);
+  int tls_flag = 0;
+
+  if (argv[0][7] == 'l')
+  	tls_flag = 1;
 
   while ((arg_get = getopt_long(argc, argv, "", args, NULL)) != -1) {
     switch(arg_get) {
@@ -154,7 +158,9 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  int sockfd = tcp_build(host, portno);
+  int sockfd;
+  if (!tls_flag)
+  	sockfd = tcp_build(host, portno);
   
   tmp = mraa_aio_init(0);
   if (tmp == NULL) {
