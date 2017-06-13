@@ -1,5 +1,7 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <resolv.h>
+#include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <fcntl.h>
