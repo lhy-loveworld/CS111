@@ -79,11 +79,12 @@ int main(int argc, char *argv[]) {
   if ( SSL_connect(ssl) == -1 )			/* perform the connection */
         ERR_print_errors_fp(stderr);
     else
-    {   char *msg = "Hello???";
-
-        printf("Connected with %s encryption\n", SSL_get_cipher(ssl));
-        dprintf(sockfd, "ID=%s\n", id);
-        //SSL_write(ssl, msg, strlen(msg));			/* encrypt & send message */
+    {   printf("Connected with %s encryption\n", SSL_get_cipher(ssl));
+        //dprintf(sockfd, "ID=%s\n", id);
+        char id_msg[13];
+        strcpy(id_msg, "ID=");
+        strcat(id_msg, id);
+        SSL_write(ssl, id_msg, strlen(id_msg));			/* encrypt & send message */
         SSL_free(ssl);								/* release connection state */
     }
     close(sockfd);									/* close socket */
