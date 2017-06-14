@@ -213,8 +213,6 @@ int main(int argc, char *argv[]) {
   
   connect_build(host, portno);
   FILE *sock_str;
-  if (!tls_flag)
-    sock_str = fdopen(sockfd, "r");
   
   tmp = mraa_aio_init(0);
   if (tmp == NULL) {
@@ -226,8 +224,8 @@ int main(int argc, char *argv[]) {
   pfd[0].fd = sockfd;
   pfd[0].events = POLLIN | POLLERR;
 
-  char buffer[20];
-
+  char buffer[101];
+  char *cmd;
   while (1) {
     int ret_poll = poll(pfd, 1, 0);
     if (ret_poll == -1) {
@@ -237,42 +235,45 @@ int main(int argc, char *argv[]) {
     } else {
       if (ret_poll == 1) {
         if (pfd[0].revents & POLLIN) {
-        	bzero(buffer, 20);
+        	bzero(buffer, 101);
           if (tls_flag)
-            SSL_read(ssl, buffer, 19);
+            SSL_read(ssl, buffer, 100);
           else 
-            fgets(buffer, 20, sock_str);
-          
-          if (!strcmp(buffer, "OFF\n")) {
-          	if (log_flag) dprintf(log_fd, "%s", buffer);
-          	Shutdown();
-          } else {
-          	if (!strcmp(buffer, "STOP\n")) {
-          		if (log_flag) dprintf(log_fd, "%s", buffer);
-              stop_flag = 1;
-          	} else {
-          		if (!strcmp(buffer, "START\n")) {
-          			if (log_flag) dprintf(log_fd, "%s", buffer);
-          			stop_flag = 0;
-          		} else {
-          			if (!strcmp(buffer, "SCALE=F\n")) {
-          				if (log_flag) dprintf(log_fd, "%s", buffer);
-          				scale_flag = 0;
-          			} else {
-          				if (!strcmp(buffer, "SCALE=C\n")) {
-	          				if (log_flag) dprintf(log_fd, "%s", buffer);
-	          				scale_flag = 1;
-	          			} else {
-	          				if ((!strncmp(buffer, "PERIOD=", 7)) && (buffer[7] < 58) && (buffer[7] > 47)) {
-		          				if (log_flag) dprintf(log_fd, "%s", buffer);
-		          				period = atoi(buffer + 7);
-		          			}
-	          			}
-          			}
-          		}
-          	}
+            read(sockfd, buffer, 100);
+          cmd = strtok(buffer, "\n");
+          while (cmd) {
+            if (!strcmp(cmd, "OFF")) {
+              if (log_flag) dprintf(log_fd, "%s\n", cmd);
+              Shutdown();
+            } else {
+              if (!strcmp(cmd, "STOP")) {
+                if (log_flag) dprintf(log_fd, "%s\n", cmd);
+                stop_flag = 1;
+              } else {
+                if (!strcmp(cmd, "START")) {
+                  if (log_flag) dprintf(log_fd, "%s\n", cmd);
+                  stop_flag = 0;
+                } else {
+                  if (!strcmp(cmd, "SCALE=F")) {
+                    if (log_flag) dprintf(log_fd, "%s\n", cmd);
+                    scale_flag = 0;
+                  } else {
+                    if (!strcmp(cmd, "SCALE=C")) {
+                      if (log_flag) dprintf(log_fd, "%s\n", cmd);
+                      scale_flag = 1;
+                    } else {
+                      if ((!strncmp(cmd, "PERIOD=", 7)) && (cmd[7] < 58) && (cmd[7] > 47)) {
+                        if (log_flag) dprintf(log_fd, "%s", cmd);
+                        period = atoi(cmd + 7);
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            cmd = strtok(NULL, "\n");
+            Check_tmp();
           }
-          Check_tmp();
         }
         if (pfd[0].revents & POLLERR) {
         	fprintf(stderr, "read() failed: %s\n", strerror(errno));
