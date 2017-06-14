@@ -91,7 +91,7 @@ int connect_build(char* host, int port) {
     char id_msg[14];
     sprintf(id_msg, "ID=%s\n", id);
     SSL_write(ssl, id_msg, strlen(id_msg));
-  } else 
+	} else 
     dprintf(sockfd, "ID=%s\n", id);
   return sockfd;
 }
@@ -176,7 +176,7 @@ int main(int argc, char *argv[]) {
   char* host = "lever.cs.ucla.edu";
   int portno = atoi(argv[argc - 1]);
 
-  if (argv[0][7] == 'l')
+  if (strstr(argv[0], "tls") != NULL)
   	tls_flag = 1;
 
   while ((arg_get = getopt_long(argc, argv, "", args, NULL)) != -1) {

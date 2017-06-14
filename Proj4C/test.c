@@ -81,14 +81,12 @@ int main(int argc, char *argv[]) {
     else
     {   printf("Connected with %s encryption\n", SSL_get_cipher(ssl));
         //dprintf(sockfd, "ID=%s\n", id);
-        char id_msg[14];
-        strcpy(id_msg, "ID=");
-        strcat(id_msg, id);
-        strcat(id_msg, "\n");
-  			SSL_write(ssl, id_msg, strlen(id_msg));			/* encrypt & send message */
-        SSL_free(ssl);								/* release connection state */
+    char id_msg[14];
+    sprintf(id_msg, "ID=%s\n", id);
+    SSL_write(ssl, id_msg, strlen(id_msg));
+      //  SSL_free(ssl);								/* release connection state */
     }
-    close(sockfd);									/* close socket */
-    SSL_CTX_free(ctx);
+   // close(sockfd);									/* close socket */
+   // SSL_CTX_free(ctx);
   return 0;
 }
