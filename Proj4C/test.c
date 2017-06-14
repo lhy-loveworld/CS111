@@ -44,7 +44,7 @@ int tcp_build(char* host, int port) {
     exit(1);
   }
 
-  dprintf(sockfd, "ID=%s\n", id);
+  //dprintf(sockfd, "ID=%s\n", id);
   return sockfd;
 }
 
@@ -76,6 +76,16 @@ int main(int argc, char *argv[]) {
  	ctx = InitCTX();
  	ssl = SSL_new(ctx);						/* create new SSL connection state */
   SSL_set_fd(ssl, sockfd);
-  SSL_connect(ssl);
+  if ( SSL_connect(ssl) == -1 )			/* perform the connection */
+        ERR_print_errors_fp(stderr);
+    else
+    {   char *msg = "Hello???";
+
+        printf("Connected with %s encryption\n", SSL_get_cipher(ssl));
+        SSL_write(ssl, msg, strlen(msg));			/* encrypt & send message */
+        SSL_free(ssl);								/* release connection state */
+    }
+    close(server);									/* close socket */
+    SSL_CTX_free(ctx);
   return 0;
 }
