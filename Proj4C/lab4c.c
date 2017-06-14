@@ -212,8 +212,7 @@ int main(int argc, char *argv[]) {
   }
   
   connect_build(host, portno);
-  FILE *sock_str;
-  
+    
   tmp = mraa_aio_init(0);
   if (tmp == NULL) {
   	fprintf(stderr, "mraa_aio_init() fail\n");
