@@ -127,8 +127,8 @@ void Check_tmp(int sockfd) {
   	int a = mraa_aio_read(tmp);
   	if (a < 0) {
   		fprintf(stderr, "mraa_aio_read() failed: %s\n", strerror(errno));
-      mraa_aio_close(tmp);
-      exit(1);
+      //mraa_aio_close(tmp);
+      //exit(1);
   	}
   	double R = 1023.0 / a - 1.0;
   	R = R0 * R;
