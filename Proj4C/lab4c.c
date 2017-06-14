@@ -106,7 +106,7 @@ void Shutdown(int sockfd) {
 	time(&rawtime);
   info = localtime(&rawtime);
   strftime(time_str, 9, "%H:%M:%S", info);
-  //dprintf(sockfd, "%s SHUTDOWN\n", time_str);
+  dprintf(sockfd, "%s SHUTDOWN\n", time_str);
   if (log_flag) {
     dprintf(log_fd, "%s SHUTDOWN\n", time_str);
   }
