@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS  = -g -Wall -lmraa -lm
+CFLAGS  = -g -Wall -lmraa -lm -lssl -lcrypto
 sources = Makefile $(TARGET).c README
 TARGET = lab4c
 UID = 304759850

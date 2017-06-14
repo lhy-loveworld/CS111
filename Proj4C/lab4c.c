@@ -1,20 +1,24 @@
 //Arthor: Hongyang Li
 //This is the source module for lab4b of CS111.
 
-#include <sys/types.h>
-#include <sys/wait.h>
+#include <errno.h>
 #include <fcntl.h>
-#include <unistd.h>
+#include <getopt.h>
+#include <math.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#include <poll.h>
+#include <resolv.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <getopt.h>
-#include <errno.h>
 #include <string.h>
-#include <poll.h>
-#include <signal.h>
-#include <math.h>
-#include <netinet/in.h>
-#include <netdb.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 #include "mraa/aio.h"
 
 
@@ -24,6 +28,7 @@ int scale_flag = 0;
 int stop_flag = 0;
 int sample = -1;
 int period = 1;
+int tls_flag = 0;
 char* id = "123456777";
 
 const int B = 4275;
@@ -56,7 +61,23 @@ int tcp_build(char* host, int port) {
     exit(1);
   }
 
-  dprintf(sockfd, "ID=%s\n", id);
+  if (tls_flag) {
+    SSL_CTX *ctx;
+    SSL *ssl;
+    ctx = InitCTX();
+    ssl = SSL_new(ctx);
+    SSL_set_fd(ssl, sockfd);
+    if (SSL_connect(ssl) == -1) {
+      fprintf(stderr, "SSL_connect() failed: %s\n", strerror(errno));
+      exit(1);
+    }
+    char id_msg[14];
+    strcpy(id_msg, "ID=");
+    strcat(id_msg, id);
+    strcat(id_msg, "\n");
+    SSL_write(ssl, id_msg, strlen(id_msg));
+  } else 
+    dprintf(sockfd, "ID=%s\n", id);
   return sockfd;
 }
 
@@ -128,7 +149,6 @@ int main(int argc, char *argv[]) {
   int arg_get;
   char* host = "lever.cs.ucla.edu";
   int portno = atoi(argv[argc - 1]);
-  int tls_flag = 0;
 
   if (argv[0][7] == 'l')
   	tls_flag = 1;
@@ -167,7 +187,7 @@ int main(int argc, char *argv[]) {
   tmp = mraa_aio_init(0);
   if (tmp == NULL) {
   	fprintf(stderr, "mraa_aio_init() fail\n");
-  	exit(1);
+  	//exit(1);
   }
 
   struct pollfd pfd[1];
