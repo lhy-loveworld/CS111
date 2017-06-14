@@ -30,6 +30,7 @@ int sample = -1;
 int period = 1;
 int tls_flag = 0;
 SSL *ssl;
+int sockfd;
 char* id = "123456777";
 
 const int B = 4275;
@@ -54,10 +55,10 @@ SSL_CTX* InitCTX(void)
     return ctx;
 }
 
-int connect_build(char* host, int port) {
+void connect_build(char* host, int port) {
 	struct sockaddr_in serv_addr;
   struct hostent *server;
-  int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+  sockfd = socket(AF_INET, SOCK_STREAM, 0);
   
   if (sockfd < 0) {
     fprintf(stderr, "ERROR opening socket: %s\n", strerror(errno));
@@ -93,10 +94,9 @@ int connect_build(char* host, int port) {
     SSL_write(ssl, id_msg, strlen(id_msg));
 	} else 
     dprintf(sockfd, "ID=%s\n", id);
-  return sockfd;
 }
 
-void Shutdown(int sockfd) {
+void Shutdown() {
 	time_t rawtime;
   struct tm *info;
   char time_str[9];
@@ -105,10 +105,12 @@ void Shutdown(int sockfd) {
 	time(&rawtime);
   info = localtime(&rawtime);
   strftime(time_str, 9, "%H:%M:%S", info);
-  bzero(buffer, 20);
-  sprintf(buffer, "%s SHUTDOWN\n", time_str);
-  SSL_write(ssl, buffer, strlen(buffer));
-  //dprintf(sockfd, "%s SHUTDOWN\n", time_str);
+  if (tls_flag) {
+    bzero(buffer, 20);
+    sprintf(buffer, "%s SHUTDOWN\n", time_str);
+    SSL_write(ssl, buffer, strlen(buffer));
+  } else
+    dprintf(sockfd, "%s SHUTDOWN\n", time_str);
   if (log_flag) {
     dprintf(log_fd, "%s SHUTDOWN\n", time_str);
   }
@@ -117,7 +119,7 @@ void Shutdown(int sockfd) {
   exit(0);
 }
 
-void Check_tmp(int sockfd) {
+void Check_tmp() {
 	time_t rawtime;
   struct tm *info;
   char time_str[9];
@@ -130,8 +132,8 @@ void Check_tmp(int sockfd) {
   	int a = mraa_aio_read(tmp);
   	if (a < 0) {
   		fprintf(stderr, "mraa_aio_read() failed: %s\n", strerror(errno));
-      //mraa_aio_close(tmp);
-      //exit(1);
+      mraa_aio_close(tmp);
+      exit(1);
   	}
   	double R = 1023.0 / a - 1.0;
   	R = R0 * R;
@@ -142,18 +144,22 @@ void Check_tmp(int sockfd) {
   	if (!stop_flag) {
 	  	if (!scale_flag) {
 	  		printf("%s %04.1f\n", time_str, tmp_C * 1.8 + 32);
-        bzero(buffer, 20);
-        sprintf(buffer, "%s %04.1f\n", time_str, tmp_C * 1.8 + 32);
-        SSL_write(ssl, buffer, strlen(buffer));
-	  		//dprintf(sockfd, "%s %04.1f\n", time_str, tmp_C * 1.8 + 32);
+        if (tls_flag) {
+          bzero(buffer, 20);
+          sprintf(buffer, "%s %04.1f\n", time_str, tmp_C * 1.8 + 32);
+          SSL_write(ssl, buffer, strlen(buffer));
+        } else
+          dprintf(sockfd, "%s %04.1f\n", time_str, tmp_C * 1.8 + 32);
 	  		if (log_flag)
 	  			dprintf(log_fd, "%s %04.1f\n", time_str, tmp_C * 1.8 + 32);
 	  	} else {
 	  		printf("%s %04.1f\n", time_str, tmp_C);
-        bzero(buffer, 20);
-        sprintf(buffer, "%s %04.1f\n", time_str, tmp_C);
-        SSL_write(ssl, buffer, strlen(buffer));
-	  		//dprintf(sockfd, "%s %04.1f\n", time_str, tmp_C);
+        if (tls_flag) {
+          bzero(buffer, 20);
+          sprintf(buffer, "%s %04.1f\n", time_str, tmp_C);
+          SSL_write(ssl, buffer, strlen(buffer));
+	  		} else
+          dprintf(sockfd, "%s %04.1f\n", time_str, tmp_C);
 	  		if (log_flag)
 	  			dprintf(log_fd, "%s %04.1f\n", time_str, tmp_C);
 	  	}
@@ -204,16 +210,16 @@ int main(int argc, char *argv[]) {
       }
     }
   }
-
-  int sockfd;
   
-  sockfd = connect_build(host, portno);
-  FILE *sock_str = fdopen(sockfd, "r");
+  connect_build(host, portno);
+  FILE *sock_str;
+  if (!tls_flag)
+    sock_str = fdopen(sockfd, "r");
   
   tmp = mraa_aio_init(0);
   if (tmp == NULL) {
   	fprintf(stderr, "mraa_aio_init() fail\n");
-  	//exit(1);
+  	exit(1);
   }
 
   struct pollfd pfd[1];
@@ -232,12 +238,14 @@ int main(int argc, char *argv[]) {
       if (ret_poll == 1) {
         if (pfd[0].revents & POLLIN) {
         	bzero(buffer, 20);
-          //sock_str = fdopen(sockfd, "r");
-          //fgets(buffer, 20, sock_str);
-          SSL_read(ssl, buffer, 19);
+          if (tls_flag)
+            SSL_read(ssl, buffer, 19);
+          else 
+            fgets(buffer, 20, sock_str);
+          
           if (!strcmp(buffer, "OFF\n")) {
           	if (log_flag) dprintf(log_fd, "%s", buffer);
-          	Shutdown(sockfd);
+          	Shutdown();
           } else {
           	if (!strcmp(buffer, "STOP\n")) {
           		if (log_flag) dprintf(log_fd, "%s", buffer);
@@ -264,7 +272,7 @@ int main(int argc, char *argv[]) {
           		}
           	}
           }
-          Check_tmp(sockfd);
+          Check_tmp();
         }
         if (pfd[0].revents & POLLERR) {
         	fprintf(stderr, "read() failed: %s\n", strerror(errno));
@@ -272,7 +280,7 @@ int main(int argc, char *argv[]) {
           exit(1);
         }
       } else {
-      	Check_tmp(sockfd);
+      	Check_tmp();
       }
     }
   }
