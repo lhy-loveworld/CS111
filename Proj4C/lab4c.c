@@ -106,7 +106,7 @@ void Shutdown(int sockfd) {
 	time(&rawtime);
   info = localtime(&rawtime);
   strftime(time_str, 9, "%H:%M:%S", info);
-  dprintf(sockfd, "%s SHUTDOWN\n", time_str);
+  //dprintf(sockfd, "%s SHUTDOWN\n", time_str);
   if (log_flag) {
     dprintf(log_fd, "%s SHUTDOWN\n", time_str);
   }
@@ -199,7 +199,7 @@ int main(int argc, char *argv[]) {
   int sockfd;
   
   sockfd = connect_build(host, portno);
-  FILE *sock_str;// = fdopen(sockfd, "r");
+  FILE *sock_str = fdopen(sockfd, "r");
   
   tmp = mraa_aio_init(0);
   if (tmp == NULL) {
@@ -223,7 +223,7 @@ int main(int argc, char *argv[]) {
       if (ret_poll == 1) {
         if (pfd[0].revents & POLLIN) {
         	bzero(buffer, 20);
-          sock_str = fdopen(sockfd, "r");
+          //sock_str = fdopen(sockfd, "r");
           fgets(buffer, 20, sock_str);
           if (!strcmp(buffer, "OFF\n")) {
           	if (log_flag) dprintf(log_fd, "%s", buffer);
