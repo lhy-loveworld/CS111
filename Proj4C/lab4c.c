@@ -31,7 +31,7 @@ int period = 1;
 int tls_flag = 0;
 SSL *ssl;
 int sockfd;
-char* id = "123456777";
+char* id = "304759850";
 
 const int B = 4275;
 const int R0 = 100000;
@@ -62,7 +62,7 @@ void connect_build(char* host, int port) {
   
   if (sockfd < 0) {
     fprintf(stderr, "ERROR opening socket: %s\n", strerror(errno));
-    exit(1);
+    exit(2);
   }
 
   server = gethostbyname(host);
@@ -77,7 +77,7 @@ void connect_build(char* host, int port) {
   serv_addr.sin_port = htons(port);
   if (connect(sockfd,(struct sockaddr *)&serv_addr,sizeof(serv_addr)) < 0) {
     fprintf(stderr, "ERROR connecting: %s\n", strerror(errno));
-    exit(1);
+    exit(2);
   }
 
   if (tls_flag) {
@@ -87,7 +87,7 @@ void connect_build(char* host, int port) {
     SSL_set_fd(ssl, sockfd);
     if (SSL_connect(ssl) == -1) {
       fprintf(stderr, "SSL_connect() failed: %s\n", strerror(errno));
-      exit(1);
+      exit(2);
     }
     char id_msg[14];
     sprintf(id_msg, "ID=%s\n", id);
@@ -133,7 +133,7 @@ void Check_tmp() {
   	if (a < 0) {
   		fprintf(stderr, "mraa_aio_read() failed: %s\n", strerror(errno));
       mraa_aio_close(tmp);
-      exit(1);
+      exit(2);
   	}
   	double R = 1023.0 / a - 1.0;
   	R = R0 * R;
@@ -219,7 +219,7 @@ int main(int argc, char *argv[]) {
   tmp = mraa_aio_init(0);
   if (tmp == NULL) {
   	fprintf(stderr, "mraa_aio_init() fail\n");
-  	exit(1);
+  	exit(2);
   }
 
   struct pollfd pfd[1];
@@ -233,7 +233,7 @@ int main(int argc, char *argv[]) {
     if (ret_poll == -1) {
       fprintf(stderr, "poll() failed: %s\n", strerror(errno));
       mraa_aio_close(tmp);
-      exit(1);
+      exit(2);
     } else {
       if (ret_poll == 1) {
         if (pfd[0].revents & POLLIN) {
@@ -277,7 +277,7 @@ int main(int argc, char *argv[]) {
         if (pfd[0].revents & POLLERR) {
         	fprintf(stderr, "read() failed: %s\n", strerror(errno));
           mraa_aio_close(tmp);
-          exit(1);
+          exit(2);
         }
       } else {
       	Check_tmp();
