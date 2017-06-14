@@ -29,6 +29,7 @@ int stop_flag = 0;
 int sample = -1;
 int period = 1;
 int tls_flag = 0;
+SSL *ssl;
 char* id = "123456777";
 
 const int B = 4275;
@@ -80,7 +81,6 @@ int connect_build(char* host, int port) {
 
   if (tls_flag) {
     SSL_CTX *ctx;
-    SSL *ssl;
     ctx = InitCTX();
     ssl = SSL_new(ctx);
     SSL_set_fd(ssl, sockfd);
@@ -89,9 +89,7 @@ int connect_build(char* host, int port) {
       exit(1);
     }
     char id_msg[14];
-    strcpy(id_msg, "ID=");
-    strcat(id_msg, id);
-    strcat(id_msg, "\n");
+    sprintf(id_msg, "ID=%s\n", id);
     SSL_write(ssl, id_msg, strlen(id_msg));
   } else 
     dprintf(sockfd, "ID=%s\n", id);
@@ -102,11 +100,15 @@ void Shutdown(int sockfd) {
 	time_t rawtime;
   struct tm *info;
   char time_str[9];
+  char buffer[20];
 
 	time(&rawtime);
   info = localtime(&rawtime);
   strftime(time_str, 9, "%H:%M:%S", info);
-  dprintf(sockfd, "%s SHUTDOWN\n", time_str);
+  bzero(buffer, 20);
+  sprintf(buffer, "%s SHUTDOWN\n", time_str);
+  SSL_write(ssl, buffer, strlen(buffer));
+  //dprintf(sockfd, "%s SHUTDOWN\n", time_str);
   if (log_flag) {
     dprintf(log_fd, "%s SHUTDOWN\n", time_str);
   }
@@ -119,6 +121,7 @@ void Check_tmp(int sockfd) {
 	time_t rawtime;
   struct tm *info;
   char time_str[9];
+  char buffer[20];
 
 	time(&rawtime);
   info = localtime(&rawtime);
@@ -139,12 +142,18 @@ void Check_tmp(int sockfd) {
   	if (!stop_flag) {
 	  	if (!scale_flag) {
 	  		printf("%s %04.1f\n", time_str, tmp_C * 1.8 + 32);
-	  		dprintf(sockfd, "%s %04.1f\n", time_str, tmp_C * 1.8 + 32);
+        bzero(buffer, 20);
+        sprintf(buffer, "%s %04.1f\n", time_str, tmp_C * 1.8 + 32);
+        SSL_write(ssl, buffer, strlen(buffer));
+	  		//dprintf(sockfd, "%s %04.1f\n", time_str, tmp_C * 1.8 + 32);
 	  		if (log_flag)
 	  			dprintf(log_fd, "%s %04.1f\n", time_str, tmp_C * 1.8 + 32);
 	  	} else {
 	  		printf("%s %04.1f\n", time_str, tmp_C);
-	  		dprintf(sockfd, "%s %04.1f\n", time_str, tmp_C);
+        bzero(buffer, 20);
+        sprintf(buffer, "%s %04.1f\n", time_str, tmp_C);
+        SSL_write(ssl, buffer, strlen(buffer));
+	  		//dprintf(sockfd, "%s %04.1f\n", time_str, tmp_C);
 	  		if (log_flag)
 	  			dprintf(log_fd, "%s %04.1f\n", time_str, tmp_C);
 	  	}
@@ -224,15 +233,15 @@ int main(int argc, char *argv[]) {
         if (pfd[0].revents & POLLIN) {
         	bzero(buffer, 20);
           //sock_str = fdopen(sockfd, "r");
-          fgets(buffer, 20, sock_str);
+          //fgets(buffer, 20, sock_str);
+          SSL_read(ssl, buffer, 19);
           if (!strcmp(buffer, "OFF\n")) {
           	if (log_flag) dprintf(log_fd, "%s", buffer);
           	Shutdown(sockfd);
           } else {
           	if (!strcmp(buffer, "STOP\n")) {
           		if (log_flag) dprintf(log_fd, "%s", buffer);
-              dprintf(sockfd, "%s", buffer);
-          		stop_flag = 1;
+              stop_flag = 1;
           	} else {
           		if (!strcmp(buffer, "START\n")) {
           			if (log_flag) dprintf(log_fd, "%s", buffer);
