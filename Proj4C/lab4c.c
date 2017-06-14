@@ -36,7 +36,24 @@ const int R0 = 100000;
 
 mraa_aio_context tmp;
 
-int tcp_build(char* host, int port) {
+SSL_CTX* InitCTX(void)
+{   SSL_METHOD const *method;
+    SSL_CTX *ctx;
+
+    OpenSSL_add_all_algorithms();   /* Load cryptos, et.al. */
+    SSL_load_error_strings();     /* Bring in and register error messages */
+    SSL_library_init();
+    method = SSLv23_client_method();    /* Create new client-method instance */
+    ctx = SSL_CTX_new(method);      /* Create new context */
+    if ( ctx == NULL )
+    {
+        ERR_print_errors_fp(stderr);
+        abort();
+    }
+    return ctx;
+}
+
+int connect_build(char* host, int port) {
 	struct sockaddr_in serv_addr;
   struct hostent *server;
   int sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -180,8 +197,8 @@ int main(int argc, char *argv[]) {
   }
 
   int sockfd;
-  if (!tls_flag)
-  	sockfd = tcp_build(host, portno);
+  
+  sockfd = connect_build(host, portno);
   FILE *sock_str;// = fdopen(sockfd, "r");
   
   tmp = mraa_aio_init(0);
