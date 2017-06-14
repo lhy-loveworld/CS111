@@ -85,7 +85,7 @@ int main(int argc, char *argv[]) {
         SSL_write(ssl, msg, strlen(msg));			/* encrypt & send message */
         SSL_free(ssl);								/* release connection state */
     }
-    close(server);									/* close socket */
+    close(sockfd);									/* close socket */
     SSL_CTX_free(ctx);
   return 0;
 }
