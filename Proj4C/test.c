@@ -52,7 +52,7 @@ SSL_CTX* InitCTX(void)
 {   SSL_METHOD const *method;
     SSL_CTX *ctx;
 
-    //OpenSSL_add_all_algorithms();		/* Load cryptos, et.al. */
+    OpenSSL_add_all_algorithms();		/* Load cryptos, et.al. */
     SSL_load_error_strings();			/* Bring in and register error messages */
     SSL_library_init();
     method = SSLv23_client_method();		/* Create new client-method instance */
@@ -76,5 +76,6 @@ int main(int argc, char *argv[]) {
  	ctx = InitCTX();
  	ssl = SSL_new(ctx);						/* create new SSL connection state */
   SSL_set_fd(ssl, sockfd);
+  SSL_connect(ssl);
   return 0;
 }
