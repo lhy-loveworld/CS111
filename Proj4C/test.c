@@ -44,7 +44,7 @@ int tcp_build(char* host, int port) {
     exit(1);
   }
 
-  //dprintf(sockfd, "ID=%s\n", id);
+  //
   return sockfd;
 }
 
@@ -82,7 +82,8 @@ int main(int argc, char *argv[]) {
     {   char *msg = "Hello???";
 
         printf("Connected with %s encryption\n", SSL_get_cipher(ssl));
-        SSL_write(ssl, msg, strlen(msg));			/* encrypt & send message */
+        dprintf(sockfd, "ID=%s\n", id);
+        //SSL_write(ssl, msg, strlen(msg));			/* encrypt & send message */
         SSL_free(ssl);								/* release connection state */
     }
     close(sockfd);									/* close socket */
