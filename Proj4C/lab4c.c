@@ -231,6 +231,7 @@ int main(int argc, char *argv[]) {
           } else {
           	if (!strcmp(buffer, "STOP\n")) {
           		if (log_flag) dprintf(log_fd, "%s", buffer);
+              dprintf(sockfd, "%s", buffer);
           		stop_flag = 1;
           	} else {
           		if (!strcmp(buffer, "START\n")) {
