@@ -262,7 +262,7 @@ int main(int argc, char *argv[]) {
                       scale_flag = 1;
                     } else {
                       if ((!strncmp(cmd, "PERIOD=", 7)) && (cmd[7] < 58) && (cmd[7] > 47)) {
-                        if (log_flag) dprintf(log_fd, "%s", cmd);
+                        if (log_flag) dprintf(log_fd, "%s\n", cmd);
                         period = atoi(cmd + 7);
                       }
                     }
